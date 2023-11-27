@@ -74,7 +74,7 @@ We see that though it is straightforward to created a propensity score model, de
 
 Then, we will select $\beta$ coefficients in an empirical fashion after fixing the distributional forms of the covariates we are interested in. 
 
-Let $X_1 \sim N(0, 1)$, $X_2 \sim \text{Bernoulli}(0.6)$, representing one continuous and one binary covariate upon which treatment is determined for each subject. Then, we see that we will need to select three $\beta$ coefficients to satisfy the form $g^{-1}(\mathbf{X}) = \beta_0 + \beta_1 X_1 + \beta_2 X_2$, where $g(\mathbf{X}) = \frac{\exp(\boldsymbol{\beta X}^T)}{1 + \exp(\boldsymbol{\beta X}^T)}$. Fixing $\beta_1$ at $2$ and $\beta_2$ at $3$ for simplicity of calculation, we see the following: 
+Let $X_1 \sim N(0, 1)$, $X_2 \sim \text{Bernoulli}(0.6)$, representing one continuous and one binary covariate upon which treatment is determined for each subject. Then, we see that we will need to select three $\beta$ coefficients to satisfy the form $g^{-1}(E[Z = 1 | X]) = \beta_0 + \beta_1 X_1 + \beta_2 X_2$, where $g(\mathbf{X}) = \frac{\exp(\boldsymbol{\beta X}^T)}{1 + \exp(\boldsymbol{\beta X}^T)} = E[Z = 1 | X]$. Fixing $\beta_1$ at $2$ and $\beta_2$ at $3$ for simplicity of calculation, we see the following: 
 
 ```{r}
 n <- 1000
@@ -131,9 +131,9 @@ b0_20 <- cur_res %>% filter(probs <= 0.2 + 0.001 & probs >= 0.2 - 0.001) %>% pul
 
 Then, we will define our propensity score models as follows:
 
-Low treatment (~20%): $g^{-1}(\mathbf{X}) = \beta_{0, 20} + \beta_1 X_1 + \beta_2 X_2 = -1.66 + 2X_1 + 3 X_2$
+Low treatment (~20%): $g^{-1}(E[Z = 1 | X]) = \beta_{0, 20} + \beta_1 X_1 + \beta_2 X_2 = -1.66 + 2X_1 + 3 X_2$
 
-High treatment (~80%): $g^{-1}(\mathbf{X}) = \beta_{0, 80} + \beta_1 X_1 + \beta_2 X_2 = 1.74 + 2X_1 + 3 X_2$
+High treatment (~80%): $g^{-1}(E[Z = 1 | X]) = \beta_{0, 80} + \beta_1 X_1 + \beta_2 X_2 = 1.74 + 2X_1 + 3 X_2$
 
 
 
