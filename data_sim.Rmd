@@ -1,0 +1,152 @@
+---
+title: "Data Simulation"
+author: "Waveley Qiu (wq46)"
+date: "`r format(Sys.time(), '%Y-%m-%d')`"
+geometry: margin=1.5cm
+output: 
+  bookdown::pdf_document2:
+    toc: false
+    number_sections: false
+header-includes:
+  - \usepackage{mathrsfs}
+  - \usepackage{amsfonts}  
+  - \usepackage{amsmath}
+  - \usepackage{amsthm}
+---
+
+```{r setup, include=FALSE}
+set.seed(20220417)
+library(tidyverse)
+library(bookdown)
+library(latex2exp)
+
+# set knitr defaults
+knitr::opts_chunk$set(
+  echo = FALSE,
+  warning = FALSE,
+  message = FALSE,
+  fig.align = "center",
+  fig.width = 6,
+  fig.asp   = .6,
+  out.width = "90%",
+  cache = TRUE
+)
+
+# set theme defaults
+theme_set(
+  theme_bw() +
+    theme(
+      legend.position = "bottom",
+      plot.title    = element_text(hjust = 0.5),
+      plot.subtitle = element_text(hjust = 0.5),
+      plot.caption  = element_text(hjust = 0.0)
+    )
+)
+
+# set color scale defaults
+options(
+  ggplot2.continuous.colour = "viridis",
+  ggplot2.continuous.fill   = "viridis"
+)
+scale_colour_discrete = scale_colour_viridis_d
+scale_fill_discrete   = scale_fill_viridis_d
+```
+
+# Treatment and Propensity Score
+
+The propensity score is defined as follows:
+
+$$
+\begin{aligned}
+e(\mathbf{X}) &= P(Z = 1 | \mathbf{X}) = E[Z = 1 | X]
+\\
+\beta X^T &= \text{logit}(E[Z = 1 | X])
+\\
+&\implies E[Z = 1 | X] = \frac{\exp(\boldsymbol{\beta X}^T)}{1 + \exp(\boldsymbol{\beta X}^T)}
+\\
+E\Big[P(Z = 1)\Big] &= E_X\Big[E_Z\Big(Z = 1 | X\Big)\Big]
+\\
+&= E_X\Bigg[\frac{\exp(\boldsymbol{\beta X}^T)}{1 + \exp(\boldsymbol{\beta X}^T)}\Bigg] = p
+\end{aligned}
+$$
+
+We see that though it is straightforward to created a propensity score model, depending on the distribution of the covariates, it may be very difficult (or impossible) to achieve a closed-form solution determine the $\beta$ coefficients needed to explicitly specify the proportion of individuals treated, $p$. 
+
+Then, we will select $\beta$ coefficients in an empirical fashion after fixing the distributional forms of the covariates we are interested in. 
+
+Let $X_1 \sim N(0, 1)$, $X_2 \sim \text{Bernoulli}(0.6)$, representing one continuous and one binary covariate upon which treatment is determined for each subject. Then, we see that we will need to select three $\beta$ coefficients to satisfy the form $g^{-1}(\mathbf{X}) = \beta_0 + \beta_1 X_1 + \beta_2 X_2$, where $g(\mathbf{X}) = \frac{\exp(\boldsymbol{\beta X}^T)}{1 + \exp(\boldsymbol{\beta X}^T)}$. Fixing $\beta_1$ at $2$ and $\beta_2$ at $3$ for simplicity of calculation, we see the following: 
+
+```{r}
+n <- 1000
+x1 <- rnorm(n, mean = 0, sd = 1)
+x2 <- runif(n, min = 0, max = 1)
+x2[x2 < 0.6] <- 1
+x2[x2 >= 0.6] <- 0
+
+lower_bound <- -5
+upper_bound <- 5
+step <- 0.01
+
+cur_b0_step <- lower_bound
+
+cur_res <- 
+  tibble(
+  )
+
+while(cur_b0_step < upper_bound){
+      cur_b0 <- cur_b0_step
+      cur_b1 <- 2
+      cur_b2 <- 3
+      cur_to_expit <- cur_b0 + cur_b1 * x1 + cur_b2 * x2  
+      
+      probs <- exp(cur_to_expit)/(1 + exp(cur_to_expit))
+      cur_probs <- sum(probs > 0.5)/sum(!is.na(probs))
+      
+      cur_res <- bind_rows(cur_res, tibble(
+        b0 = cur_b0,
+        b1 = cur_b1,
+        b2 = cur_b2,
+        probs = cur_probs
+      ))
+      
+  cur_b0_step <- cur_b0_step + step
+ # print(cur_b0_step)
+}
+
+cur_res %>% 
+  ggplot(
+  aes(x = b0, y = probs)
+  ) + geom_line() +
+  geom_hline(yintercept = 0.2, col = "red") +
+  geom_hline(yintercept = 0.8, col = "green") +
+  labs(
+    x = "Beta_0",
+    y = "Probability of Treatment",
+    title = "Estimated Treatment Probability by Beta_0"
+  )
+
+b0_80 <- cur_res %>% filter(probs == 0.8) %>% pull(b0) %>% median()
+b0_20 <- cur_res %>% filter(probs <= 0.2 + 0.001 & probs >= 0.2 - 0.001) %>% pull(b0) %>% median()
+```
+
+Then, we will define our propensity score models as follows:
+
+Low treatment (~20%): $g^{-1}(\mathbf{X}) = \beta_{0, 20} + \beta_1 X_1 + \beta_2 X_2 = -1.66 + 2X_1 + 3 X_2$
+
+High treatment (~80%): $g^{-1}(\mathbf{X}) = \beta_{0, 80} + \beta_1 X_1 + \beta_2 X_2 = 1.74 + 2X_1 + 3 X_2$
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
