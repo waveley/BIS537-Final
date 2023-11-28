@@ -82,6 +82,7 @@ x1 <- rnorm(n, mean = 0, sd = 1)
 x2 <- runif(n, min = 0, max = 1)
 x2[x2 < 0.6] <- 1
 x2[x2 >= 0.6] <- 0
+x3 <- rgamma(n, 1, 1)
 
 lower_bound <- -5
 upper_bound <- 5
@@ -97,7 +98,8 @@ while(cur_b0_step < upper_bound){
       cur_b0 <- cur_b0_step
       cur_b1 <- 2
       cur_b2 <- 3
-      cur_to_expit <- cur_b0 + cur_b1 * x1 + cur_b2 * x2  
+      cur_b3 <- 1 
+      cur_to_expit <- cur_b0 + cur_b1 * x1 + cur_b2 * x2 + cur_b3 * x3 
       
       probs <- exp(cur_to_expit)/(1 + exp(cur_to_expit))
       cur_probs <- sum(probs > 0.5)/sum(!is.na(probs))
@@ -106,6 +108,7 @@ while(cur_b0_step < upper_bound){
         b0 = cur_b0,
         b1 = cur_b1,
         b2 = cur_b2,
+        b3 = cur_b3,
         probs = cur_probs
       ))
       
@@ -125,7 +128,7 @@ cur_res %>%
     title = "Estimated Treatment Probability by Beta_0"
   )
 
-b0_80 <- cur_res %>% filter(probs == 0.8) %>% pull(b0) %>% median()
+b0_80 <- cur_res %>% filter(probs <= 0.8 + 0.001 & probs >= 0.8 - 0.001) %>% pull(b0) %>% median()
 b0_20 <- cur_res %>% filter(probs <= 0.2 + 0.001 & probs >= 0.2 - 0.001) %>% pull(b0) %>% median()
 ```
 

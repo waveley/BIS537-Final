@@ -1,0 +1,367 @@
+---
+title: "BIS 537 Final Project Report"
+author: "Waveley Qiu (wq46)"
+date: "`r format(Sys.time(), '%Y-%m-%d')`"
+geometry: margin=2cm
+output: 
+  bookdown::pdf_document2:
+    toc: false
+    number_sections: false
+header-includes:
+  - \usepackage{mathrsfs}
+  - \usepackage{amsfonts}  
+  - \usepackage{amsmath}
+  - \usepackage{amsthm}
+---
+
+```{r setup, include=FALSE}
+set.seed(20220417)
+library(tidyverse)
+library(bookdown)
+library(latex2exp)
+
+# set knitr defaults
+knitr::opts_chunk$set(
+  echo = FALSE,
+  warning = FALSE,
+  message = FALSE,
+  fig.align = "center",
+  fig.width = 6,
+  fig.asp   = .6,
+  out.width = "90%",
+  cache = FALSE
+)
+
+# set theme defaults
+theme_set(
+  theme_bw() +
+    theme(
+      legend.position = "bottom",
+      plot.title    = element_text(hjust = 0.5),
+      plot.subtitle = element_text(hjust = 0.5),
+      plot.caption  = element_text(hjust = 0.0)
+    )
+)
+
+# set color scale defaults
+options(
+  ggplot2.continuous.colour = "viridis",
+  ggplot2.continuous.fill   = "viridis"
+)
+scale_colour_discrete = scale_colour_viridis_d
+scale_fill_discrete   = scale_fill_viridis_d
+```
+
+# Background
+
+## Survival Analysis and Causal Inference
+
+While the ideal setting to conduct causal inference on survival outcomes are randomized experiments, as is true for most areas of research, it is often the case that such an experimental setting is difficult or impossible to achieve. As such, when treatment and control groups are not exchangeable, it may be necessary to implement causal inference methods to address the absence of direct counterfactual proxies.
+
+Time-to-event outcomes are of great interest to investigators across a variety of clinical settings, however present analytical difficulties even within the constrains of a randomized controlled trial. In particular, the non-observation of an event yet loss of a subject's data, or censoring, presents another missing data issue that the investigator has need to consider. 
+
+In this study, we will investigate two possible methods in which this dual-level missing data issue can be addressed. First, is an iterated weighting method, in which weights based on the probability of treatment and the probability of censoring are calculated and used together in estimating the causal estimand of interest. We then will investigate a matching and weighting combination method, in which the probability of censoring based on baseline covariates will be used to match censored records with complete records and the matched records will be weighted based on their propensity scores. 
+
+## Causal Survival Estimands
+
+The estimand of interest for this simulation study will be the restricted average survival causal effect, defined as follows (Mao 2018):
+
+$$
+\begin{aligned}
+  \Delta_{RACE} &= \frac{E[\omega(e_i)\min(T_{1i}, t^*)]}{E[\omega(e_i)]} - \frac{E[\omega(e_i)\min(T_{0i}, t^*)]}{E[\omega(e_i)]}
+  \\
+  &= \int_0^{t^*} S_1(t)dt - \int_0^{t^*} S_0(t)dt
+\end{aligned}
+$$
+
+This estimand is interpreted as the average difference in survival time between the treatment and control groups, if both potential outcomes are observed, under the upper bound time restriction of $t^*$.
+
+## Data Generation Settings
+
+We will be using three covariates in this simulation study: $X_1$, $X_2$, $X_3$. These covariates have the following distributions: $X_1 \sim N(0, 1)$, $X_2 \sim \text{Bernoulli}(0.6)$, $X_3 \sim \text{Gamma}(1, 1)$. Patterned after the simulation in Mao 2018, we will define our true models as follows:
+
+### Propensity Score Model
+
+The propensity score model will be defined as the following logistic regression: 
+
+$$
+\begin{aligned}
+g^{-1}(E[Z = 1 | \mathbf{X}_i]) = \beta_0 + \beta_1 X_{1i} + \beta_2 X_{2i} + \beta_3 X_{3i},
+\\
+\text{where } g(\mathbf{\mathbf{X}_i}) = \frac{\exp(\boldsymbol{\beta}\mathbf{X}_i^T)}{1 + \exp(\boldsymbol{\beta}\mathbf{X}_i^T)} = E[Z = 1 | \mathbf{X}_i] = e(\mathbf{X}_i)
+\end{aligned}
+$$
+
+In our simulation, $\beta_1$, $\beta_2$, and $\beta_3$ will be varied to create settings of varying overlap (i.e., weak and strong overlaps), and $\beta_0$ will be varied to specify treatment proportions (i.e., low and high treatment proportions).
+
+### Survival Times Models
+
+The outcomes model will be defined as the following Cox-Weibull model: 
+
+$$
+\begin{aligned}
+h(t|\mathbf{X}_i) &= h_0(t) \exp(L_i),
+\\
+\text{where } h_0(t) &= \lambda \nu t^{\nu-1}, \text{ and } L_i = a_0 Z_i + a_1 X_{1i} + a_3 X_{3i}
+\end{aligned}
+$$
+
+Then, the survival time for subject $i$ is drawn from:
+
+$$
+T_i = \Bigg(\frac{-\log(u)}{\lambda \exp(L_i)}\Bigg)^{1/\nu}, 
+\\
+\text{where } u \sim \text{Unif}(0, 1)
+$$
+
+# Data Simulation
+
+## Treatment and Propensity Score
+
+The propensity score is defined as follows:
+
+$$
+\begin{aligned}
+e( \mathbf{X}_i) &= P(Z = 1 |  \mathbf{X}_i) = E[Z = 1 |  \mathbf{X}_i]
+\\
+\boldsymbol{\beta} \mathbf{X}_i^T &= \text{logit}(E[Z = 1 | \mathbf{X}_i])
+\\
+&\implies E[Z = 1 |\mathbf{X}_i] = \frac{\exp(\boldsymbol{\beta} \mathbf{X}_i^T)}{1 + \exp(\boldsymbol{\beta} \mathbf{X}_i^T)}
+\\
+E\Big[P(Z = 1)\Big] &= E_X\Big[E_Z\Big(Z = 1 | \mathbf{X}_i\Big)\Big]
+\\
+&= E_X\Bigg[\frac{\exp(\boldsymbol{\beta} \mathbf{X}_i^T)}{1 + \exp(\boldsymbol{\beta} \mathbf{X}_i^T)}\Bigg] = p
+\end{aligned}
+$$
+
+Let $X_1 \sim N(0, 1)$, $X_2 \sim \text{Bernoulli}(0.6)$, representing one continuous and one binary covariate upon which treatment is determined for each subject. Then, we see that we will need to select three $\beta$ coefficients to satisfy the form $g^{-1}(E[Z = 1 | X]) = \beta_0 + \beta_1 X_1 + \beta_2 X_2$, where $g(\mathbf{X}) = \frac{\exp(\boldsymbol{\beta X}^T)}{1 + \exp(\boldsymbol{\beta X}^T)} = E[Z = 1 | X]$. 
+
+For weak overlap, let $\beta_1 = \beta_2 = \beta_3 = 3$. For moderate overlap,  $\beta_1 = \beta_2 = \beta_3 = 1$. For strong overlap,  $\beta_1 = \beta_2 = \beta_3 = 0.1$. 
+
+```{r}
+# covariate setting
+n <- 1000
+x1 <- rnorm(n, mean = 0, sd = 1)
+x2 <- runif(n, min = 0, max = 1)
+x2[x2 < 0.6] <- 1
+x2[x2 < 1] <- 0
+x3 <- rgamma(n, 1, 1)
+cov_df <- tibble(x1 = x1,
+                 x2 = x2,
+                 x3 = x3)
+
+xlist <-  list(x1, x2, x3)
+```
+
+```{r}
+# ###################################################
+# gem_prop_score_beta0()
+# - used to find beta0 given overlap parameters and 
+#   desired treatment proportion
+# - pass in covariate list and model parameters
+# - returns list containing selected beta0, full search
+#   procedure results, and ggplot of beta0
+# ###################################################
+ 
+gen_prop_score_beta0 <- function(x=xlist, 
+                                 p=0.5, 
+                                 b, 
+                                 thresh = 0.01){
+  x1 <- x[[1]]
+  x2 <- x[[2]]
+  x3 <- x[[3]]
+  beta1 <- b[[1]]
+  beta2 <- b[[2]]
+  beta3 <- b[[3]]
+  
+  lower_bound <- -10
+  upper_bound <- 10
+  step <- 0.01
+
+  cur_b0_step <- lower_bound
+
+  cur_res <- 
+    tibble(
+    )
+
+  while(cur_b0_step <= upper_bound){
+      cur_b0 <- cur_b0_step
+      cur_b1 <- beta1
+      cur_b2 <- beta2
+      cur_b3 <- beta3
+      cur_to_expit <- cur_b0 + cur_b1 * x1 + cur_b2 * x2 + cur_b3 * x3 
+      
+      probs <- exp(cur_to_expit)/(1 + exp(cur_to_expit))
+      cur_probs <- sum(probs > 0.5)/sum(!is.na(probs))
+      
+      cur_res <- bind_rows(cur_res, tibble(
+        b0 = cur_b0,
+        b1 = cur_b1,
+        b2 = cur_b2,
+        b3 = cur_b3,
+        probs = cur_probs
+      ))
+      
+  cur_b0_step <- cur_b0_step + step
+  }
+  b0_fin <- 
+    cur_res %>% 
+    filter(probs <= p + thresh & probs >= p - thresh) %>% 
+    pull(b0) %>% 
+    median()
+  
+  cur_res_gg <-
+    cur_res %>% 
+    ggplot(
+    aes(x = b0, y = probs)
+    ) + geom_line() +
+    geom_hline(yintercept = p, col = "red") +
+    labs(
+      x = "Beta_0",
+      y = "Probability of Treatment",
+      title = "Estimated Treatment Probability by Beta_0"
+    )
+
+  return(list(b0_emp = b0_fin, cur_res = cur_res, cur_res_gg = cur_res_gg))
+}
+
+
+low_overlap <- gen_prop_score_beta0(b = list(3, 3, 3))
+moderate_overlap <- gen_prop_score_beta0(b = list(1, 1, 1))
+high_overlap <- gen_prop_score_beta0(b = list(0.1, 0.1, 0.1))
+```
+
+```{r}
+# ###################################################
+# gen_prop_scores()
+# - used to append propensity scores to covariate
+#   dataframe
+# - pass in beta list and covariate dataframe
+# - returns covariate dataframe with prop scores and
+#   treatment assignment appended
+# ###################################################
+
+gen_prop_scores <- function(b, covs = cov_df){
+  b0 <- b[[1]]
+  b1 <- b[[2]]
+  b2 <- b[[3]]
+  b3 <- b[[4]]
+  
+  out_df <- 
+    covs %>%
+    mutate(
+      prop_score = 
+        exp(b0 + b1*x1 + b2*x2 + b3*x3)/
+        (1 + exp(b0 + b1*x1 + b2*x2 + b3*x3))
+    )
+
+    for (i in 1:nrow(out_df)) {
+    out_df$trt[i] <- 
+      rbernoulli(1, p = out_df$prop_score[i]) %>%
+      as.numeric()
+    }
+
+  return(out_df)
+}
+
+cov_prop_high_overlap <- 
+  gen_prop_scores(b = list(high_overlap[[1]], 0.1, 0.1, 0.1)) 
+
+
+cov_prop_moderate_overlap <- 
+  gen_prop_scores(b = list(moderate_overlap[[1]], 1, 1, 1)) 
+
+
+cov_prop_low_overlap <- 
+  gen_prop_scores(b = list(low_overlap[[1]], 3, 3, 3)) 
+```
+
+The following plots show the overlap of these three simulations:
+
+```{r}
+cov_prop_high_overlap %>% 
+  ggplot(
+  aes(x = prop_score, fill = as.factor(trt))
+) + 
+  geom_density(alpha = 0.3) +
+  labs(x = "Propensity Score",
+       y = "Frequency",
+       title = "High Overlap",
+       fill = "Treatment")
+
+cov_prop_moderate_overlap %>% 
+  ggplot(
+  aes(x = prop_score, fill = as.factor(trt))
+) + 
+  geom_density(alpha = 0.3) +
+  labs(x = "Propensity Score",
+       y = "Frequency",
+       title = "Moderate Overlap",
+       fill = "Treatment")
+
+
+cov_prop_low_overlap %>% 
+  ggplot(
+  aes(x = prop_score, fill = as.factor(trt))
+) + 
+  geom_density(alpha = 0.3) +
+  labs(x = "Propensity Score",
+       y = "Frequency",
+       title = "Low Overlap",
+       fill = "Treatment")
+```
+
+```{r}
+# ####### covariate datasets ######
+#cov_prop_high_overlap
+#cov_prop_low_overlap
+#cov_prop_moderate_overlap
+```
+
+## Outcomes
+
+The following generates the outcomes, drawn from a Cox-Weibull model.
+
+```{r}
+a0 <- 1
+a1 <- 2
+a3 <- 3
+nu <- 3
+lambda <- 0.0001
+
+# ###################################################
+# gen_outcomes()
+# - pass in covariate dataframe and model parameters
+# - returns covariate dataframe with outcomes
+# ###################################################
+
+gen_outcomes <- function(covs, lambda, nu, a = list(a0, a1, a3)){
+  out_df <- 
+    covs %>% 
+    bind_cols(tibble(u = runif(n))) %>%
+    mutate(L = a0*trt + a1*x1 + a3*x3,
+         time = (-log(u)/(lambda * exp(L)))^(1/nu)
+    )
+return(out_df)
+}
+
+### test outcomes ###
+out_test <- 
+  gen_outcomes(cov_prop_high_overlap, lambda = lambda, nu = nu)
+
+out_test %>% 
+  ggplot(
+  aes(x = time, fill = as.factor(trt))
+) +
+  geom_density(alpha=0.3) +
+  labs(
+    x = "Time",
+    y = "Density",
+    title = "Density of Time by Treatment\nHigh Overlap Set",
+    fill = "Treatment"
+  )
+```
+
+
+
+
