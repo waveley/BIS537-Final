@@ -1,6 +1,6 @@
 ---
 title: "BIS 537 Final Project Report"
-author: "Waveley Qiu (wq46)"
+author: "Can Meng and Waveley Qiu"
 date: "`r format(Sys.time(), '%Y-%m-%d')`"
 geometry: margin=2cm
 output: 
@@ -94,7 +94,7 @@ $$
 
 In our simulation, $\beta_1$, $\beta_2$, and $\beta_3$ will be varied to create settings of varying overlap (i.e., weak and strong overlaps), and $\beta_0$ will be varied to specify treatment proportions (i.e., low and high treatment proportions).
 
-### Survival Times Models
+### Survival Times Model
 
 The outcomes model will be defined as the following Cox-Weibull model: 
 
@@ -113,6 +113,9 @@ T_i = \Bigg(\frac{-\log(u)}{\lambda \exp(L_i)}\Bigg)^{1/\nu},
 \\
 \text{where } u \sim \text{Unif}(0, 1)
 $$
+### Censoring Model
+
+< in progress! >
 
 # Data Simulation
 
@@ -361,6 +364,11 @@ out_test %>%
     fill = "Treatment"
   )
 ```
+
+## Censoring
+
+< in progress! >
+
 
 
 
