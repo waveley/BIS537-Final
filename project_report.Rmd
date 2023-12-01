@@ -113,9 +113,10 @@ T_i = \Bigg(\frac{-\log(u)}{\lambda \exp(L_i)}\Bigg)^{1/\nu},
 \\
 \text{where } u \sim \text{Unif}(0, 1)
 $$
+
 ### Censoring Model
 
-< in progress! >
+
 
 # Data Simulation
 
@@ -349,7 +350,8 @@ return(out_df)
 }
 
 ### test outcomes ###
-out_test <- 
+cov_df
+out_test_po_1 <- 
   gen_outcomes(cov_prop_high_overlap, lambda = lambda, nu = nu)
 
 out_test %>% 
@@ -369,6 +371,114 @@ out_test %>%
 
 < in progress! >
 
+
+
+## Test
+
+```{r, message = TRUE}
+library(progress)
+n_1 <- 100000
+pb <- progress_bar$new(total = n_1)
+
+  u <- rnorm(n_1, 35)
+  for(i in 1:n_1){
+    cur_samp <- runif(500, 0, 2*u[i])
+    t[i] <- mean(cur_samp)
+  }
+  t_hat <- mean(t)
+
+ggplot(aes(x = x), data = tibble(x = t)) + 
+  geom_histogram(bins = 25)
+```
+
+## True Estimand
+
+As we have previously established, $T(0)\Big|(X_1, X_3)$ and $T(1)\Big|(X_1, X_3)$ are drawn from the following models:
+
+$$
+\begin{aligned}
+T(1)\Big|(X_1, X_3) &\sim h_{Z = 1}(t|X_1, X_3) = \lambda v t^{v-1}\exp(\alpha_0 + \alpha_1 X_1 + \alpha_3 X_3)
+\\
+T(0)\Big|(X_1, X_3) &\sim h_{Z = 0}(t|X_1, X_3) = \lambda v t^{v-1}\exp(\alpha_1 X_1 + \alpha_3 X_3)
+\end{aligned}
+$$
+
+Our target estimand is the average causal effect, or $E[T(1) - T(0)]$, which is unconditional on $(X_1, X_3)$. By the law of total expectations and iterated expectations, we see the following:
+
+$$
+\begin{aligned}
+E[T_i] &= E\Bigg[E\Big[T_i | X_1, X_3)\Big]\Bigg]
+\\
+&= 
+\end{aligned}
+$$
+
+```{r, message = TRUE}
+library(progress)
+library(beepr)
+library(patchwork)
+n_1 <- 100000
+#alpha_0 <- 1
+#alpha_1 <- 2
+#alpha_2 <- 1.5
+#alpha_3 <- 3
+
+run_true_expected_time <- function(n, params){
+
+  alpha_0 <- params[[1]]
+  alpha_1 <- params[[2]]
+  alpha_2 <- params[[3]]
+  alpha_3 <- params[[4]]
+  
+  lambda <- params[[5]]
+  v <- params[[6]]
+  
+  ###### define confounders here #####
+  x_1 <- rbernoulli(n, 0.6)
+  x_2 <- rnorm(n)
+  x_3 <- rgamma(n, 1, 1)
+
+  ###### define l here #####
+  l <- alpha_0 + alpha_1*x_1 + alpha_3*x_3
+  
+  t <- c()
+  
+  pb <- progress_bar$new(total = n, format = "running sim of size :total... [:bar]   :percent completed; eta: :eta")
+  
+  for(i in 1:n){
+    pb$tick()
+    cur_samp <- runif(n)
+    calculated_samp[i] <- (-log(cur_samp[i])/(lambda*exp(l[i])))^(1/v)
+    t[i] <- mean(calculated_samp)
+  }
+  
+  t_hat <- mean(t)
+  beep()
+  return(list(t, t_hat))
+}
+
+
+t_1_true_val_list <- run_true_expected_time(n = 10000, params = list(1, 2, 1.5, 3, 0.0001, 3))
+#t_1_true_val_list_2 <- run_true_expected_time(n = 500000, params = list(1, 2, 1.5, 3, 0.0001, 3))
+#t_1_true_val_list_3 <- run_true_expected_time(n = 500000, params = list(1, 2, 1.5, 3, 0.0001, 3))
+t_0_true_val_list <- run_true_expected_time(n = 10000, params = list(0, 2, 1.5, 3, 0.0001, 3))
+
+g1 <- ggplot(aes(x = x), data = tibble(x = t_1_true_val_list[[1]])) + 
+  geom_histogram(bins = 25)
+
+#g2 <- ggplot(aes(x = x), data = tibble(x = t_1_true_val_list_2[[1]])) + 
+  geom_histogram(bins = 25)
+
+#g3 <- ggplot(aes(x = x), data = tibble(x = t_1_true_val_list_3[[1]])) + 
+  geom_histogram(bins = 25)
+
+t_1_true_val_list[[2]]
+#t_1_true_val_list_2[[2]]
+#t_1_true_val_list_3[[2]]
+
+g1 
+#+ g2 + g3
+```
 
 
 
