@@ -454,7 +454,7 @@ t_0_true_val <- run_true_expected_time(n = m, params = list(0, 2, 1.5, 3, 0.0001
 t_1_true_val - t_0_true_val
 ```
 
-From conducting this procedure, we find that the estimated true value of $\tau_1 = E[T(1)]$ is `r t_1_true_val` and the estimated true value of $\tau_0 = E[T(0)]$ is `r t_0_true_val`. Thus, we have an estimated true treatment effect of $\tau = E[T(1) - T(0)] = $ `r t_1_true_val - t_0_true_val`. 
+From conducting this procedure, and under the current model parameters, we find that the estimated true value of $\tau_1 = E[T(1)]$ is `r t_1_true_val` and the estimated true value of $\tau_0 = E[T(0)]$ is `r t_0_true_val`. Thus, we have an estimated true treatment effect of $\tau = E[T(1) - T(0)] = $ `r t_1_true_val - t_0_true_val` in this current setting. 
 
 
 
