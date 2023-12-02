@@ -373,24 +373,6 @@ out_test %>%
 
 
 
-## Test
-
-```{r, message = TRUE}
-library(progress)
-n_1 <- 100000
-pb <- progress_bar$new(total = n_1)
-
-  u <- rnorm(n_1, 35)
-  for(i in 1:n_1){
-    cur_samp <- runif(500, 0, 2*u[i])
-    t[i] <- mean(cur_samp)
-  }
-  t_hat <- mean(t)
-
-ggplot(aes(x = x), data = tibble(x = t)) + 
-  geom_histogram(bins = 25)
-```
-
 ## True Estimand
 
 As we have previously established, $T(0)\Big|(X_1, X_3)$ and $T(1)\Big|(X_1, X_3)$ are drawn from the following models:
@@ -409,19 +391,28 @@ $$
 \begin{aligned}
 E[T_i] &= E\Bigg[E\Big[T_i | X_1, X_3)\Big]\Bigg]
 \\
-&= 
+&= \int _{X_1, X_3} E\Big[T_i | X_1= x_1, X_3 = x_3]P(X_1 = x_1, X_3 = x_3)d\mu (x_1, x_3)
+\\
+&= \int _{X_1, X_3} E\Big[T_i | X_1= x_1, X_3 = x_3]P(X_1 = x_1) P(X_3 = x_3)d\mu (x_1, x_3)
 \end{aligned}
 $$
+
+Let $X_{11}, ..., X_{1m} \sim P(X_1)$ and $X_{31}, ..., X_{3m} \sim P(X_3)$. Then, for $m$ sufficiently large, we note: 
+
+$$
+\begin{aligned}
+E[T_i] &= \int _{X_1, X_3} E\Big[T_i | X_1= x_1, X_3 = x_3]P(X_1 = x_1) P(X_3 = x_3)d\mu (x_1, x_3) 
+\\
+&\approx \sum_{j=1}^m E[T_i|X_1 = x_{1j}, X_3 = x_{3j}]
+\end{aligned}
+$$
+
+To obtain the true value estimates of $E[T(1)]$ and $E[T(0)]$, we will draw 1000000 samples each from the distributions of $X_1$ and $X_3$ to simulate the distributional behavior of each of these random variables, and sum the computed conditional expectations of $T(1)|(X_{1j}, X_{3j})$ and $T(0)|(X_{1k}, X_{3k})$ for each sample $j$ and $k$, where $j = k = 1000000$.
 
 ```{r, message = TRUE}
 library(progress)
 library(beepr)
 library(patchwork)
-n_1 <- 100000
-#alpha_0 <- 1
-#alpha_1 <- 2
-#alpha_2 <- 1.5
-#alpha_3 <- 3
 
 run_true_expected_time <- function(n, params){
 
@@ -439,46 +430,32 @@ run_true_expected_time <- function(n, params){
   x_3 <- rgamma(n, 1, 1)
 
   ###### define l here #####
-  l <- alpha_0 + alpha_1*x_1 + alpha_3*x_3
+  l <- alpha_0 + alpha_1*x_1 + alpha_3*x_3 
   
   t <- c()
   
   pb <- progress_bar$new(total = n, format = "running sim of size :total... [:bar]   :percent completed; eta: :eta")
   
-  for(i in 1:n){
-    pb$tick()
+#  for(i in 1:n){
+#    pb$tick()
     cur_samp <- runif(n)
-    calculated_samp[i] <- (-log(cur_samp[i])/(lambda*exp(l[i])))^(1/v)
-    t[i] <- mean(calculated_samp)
-  }
+    calculated_samp <- (-log(cur_samp)/(lambda*exp(l)))^(1/v)
+    t <- mean(calculated_samp)
+#  }
   
-  t_hat <- mean(t)
-  beep()
-  return(list(t, t_hat))
+#  t_hat <- mean(t)
+#  beep()
+  return(t)
 }
 
-
-t_1_true_val_list <- run_true_expected_time(n = 10000, params = list(1, 2, 1.5, 3, 0.0001, 3))
-#t_1_true_val_list_2 <- run_true_expected_time(n = 500000, params = list(1, 2, 1.5, 3, 0.0001, 3))
-#t_1_true_val_list_3 <- run_true_expected_time(n = 500000, params = list(1, 2, 1.5, 3, 0.0001, 3))
-t_0_true_val_list <- run_true_expected_time(n = 10000, params = list(0, 2, 1.5, 3, 0.0001, 3))
-
-g1 <- ggplot(aes(x = x), data = tibble(x = t_1_true_val_list[[1]])) + 
-  geom_histogram(bins = 25)
-
-#g2 <- ggplot(aes(x = x), data = tibble(x = t_1_true_val_list_2[[1]])) + 
-  geom_histogram(bins = 25)
-
-#g3 <- ggplot(aes(x = x), data = tibble(x = t_1_true_val_list_3[[1]])) + 
-  geom_histogram(bins = 25)
-
-t_1_true_val_list[[2]]
-#t_1_true_val_list_2[[2]]
-#t_1_true_val_list_3[[2]]
-
-g1 
-#+ g2 + g3
+m <- 1000000
+t_1_true_val <- run_true_expected_time(n = m, params = list(-0.2, 2, 1.5, 3, 0.0001, 3)) %>% round(digits = 3)
+t_0_true_val <- run_true_expected_time(n = m, params = list(0, 2, 1.5, 3, 0.0001, 3)) %>% round(digits = 3)
+t_1_true_val - t_0_true_val
 ```
+
+From conducting this procedure, we find that the estimated true value of $\tau_1 = E[T(1)]$ is `r t_1_true_val` and the estimated true value of $\tau_0 = E[T(0)]$ is `r t_0_true_val`. Thus, we have an estimated true treatment effect of $\tau = E[T(1) - T(0)] = $ `r t_1_true_val - t_0_true_val`. 
+
 
 
 
