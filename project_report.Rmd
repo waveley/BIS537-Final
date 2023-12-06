@@ -86,7 +86,7 @@ The propensity score model will be defined as the following logistic regression:
 
 $$
 \begin{aligned}
-g^{-1}(E[Z = 1 | \mathbf{X}_i]) = \beta_0 + \beta_1 X_{1i} + \beta_2 X_{2i} + \beta_3 X_{3i},
+g^{-1}(E[Z = 1 | \mathbf{X}_i]) = \beta_0 + \beta_1 X_{1i} + \beta_2 X_{2i},
 \\
 \text{where } g(\mathbf{\mathbf{X}_i}) = \frac{\exp(\boldsymbol{\beta}\mathbf{X}_i^T)}{1 + \exp(\boldsymbol{\beta}\mathbf{X}_i^T)} = E[Z = 1 | \mathbf{X}_i] = e(\mathbf{X}_i)
 \end{aligned}
