@@ -181,15 +181,7 @@ source(file = "propensity_score_functions.R")
 ```{r}
 # covariate setting
 n <- 100000
-```
 
-```{r}
-low_overlap <- gen_prop_score_beta0(b = list(3, 3, 3))
-moderate_overlap <- gen_prop_score_beta0(b = list(1, 1, 1))
-high_overlap <- gen_prop_score_beta0(b = list(0.5, 0.5, 0.5))
-```
-
-```{r}
 cov_prop_high_overlap <- 
   gen_prop_scores(b = list(high_overlap[[1]], 0.1, 0.1, 0.1)) 
 

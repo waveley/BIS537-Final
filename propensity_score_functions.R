@@ -1,6 +1,6 @@
 # ####################################
 # 
-# Program: propensity_score_fns.R
+# Program: propensity_score_functions.R
 #
 # Description: Contains functions for propensity score generation
 # 
@@ -15,16 +15,13 @@
 #   procedure results, and ggplot of beta0
 # ###################################################
 
-gen_prop_score_beta0 <- function(x=xlist, 
+gen_prop_score_beta0 <- function(n_prop,
                                  p=0.55, 
                                  b, 
                                  thresh = 0.01){
-  x1 <- x[[1]]
-  x2 <- x[[2]]
-  x3 <- x[[3]]
+
   beta1 <- b[[1]]
   beta2 <- b[[2]]
-  beta3 <- b[[3]]
   
   lower_bound <- -10
   upper_bound <- 10
@@ -36,14 +33,21 @@ gen_prop_score_beta0 <- function(x=xlist,
     tibble(
     )
   
+  pb <- progress_bar$new(
+    total = (upper_bound - lower_bound)/step + 1, 
+    format = "running sim of size :total... [:bar]   :percent completed; eta: :eta"
+  )
   while(cur_b0_step <= upper_bound){
+    pb$tick()
+    x1 <- gen_cur_covs(n_prop)
     
-    x1 <- 
+    x1 <- x[[1]]
+    x2 <- x[[2]]
+    x3 <- x[[3]]
     
     cur_b0 <- cur_b0_step
     cur_b1 <- beta1
     cur_b2 <- beta2
-    cur_b3 <- beta3
     
     cur_to_expit <- cur_b0 + cur_b1 * x1 + cur_b2 * x2
     
@@ -54,7 +58,6 @@ gen_prop_score_beta0 <- function(x=xlist,
       b0 = cur_b0,
       b1 = cur_b1,
       b2 = cur_b2,
-      b3 = cur_b3,
       probs = cur_probs
     ))
     
@@ -81,6 +84,21 @@ gen_prop_score_beta0 <- function(x=xlist,
   return(list(b0_emp = b0_fin, cur_res = cur_res, cur_res_gg = cur_res_gg))
 }
 
+# ### parameter setting beta 0 ###
+
+#high_b <- list(0.1, 0.1)
+#med_b <- list(1, 1)
+#low_b <- list(3, 3)
+#cur_n <- 100000
+
+# ### low ###
+#beta_0_low <- gen_prop_score_beta0(cur_n, b=low_b)
+
+# ### med ###
+#beta_0_med <- gen_prop_score_beta0(cur_n, b=med_b)
+
+# ### high ###
+#beta_0_high <- gen_prop_score_beta0(cur_n, b=high_b)
 
 # ###################################################
 # gen_prop_scores()

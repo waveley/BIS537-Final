@@ -16,3 +16,4 @@ gen_cur_covs <- function(n=1000){
   xlist <-  list(x1, x2, x3)
   return(xlist)
 }
+
