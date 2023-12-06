@@ -78,7 +78,7 @@ This estimand is interpreted as the average difference in survival time between 
 
 ## Data Generation Settings
 
-We will be using three covariates in this simulation study: $X_1$, $X_2$, $X_3$. These covariates have the following distributions: $X_1 \sim N(0, 1)$, $X_2 \sim \text{Bernoulli}(0.6)$, $X_3 \sim \text{Gamma}(1, 1)$. Patterned after the simulation in Mao 2018, we will define our true models as follows:
+We will be using three covariates in this simulation study: $X_1$, $X_2$, $X_3$. These covariates have the following distributions: $X_1 \sim  \text{Bernoulli}(0.6)$, $X_2 \sim  N(0, 1)$, $X_3 \sim \text{Gamma}(1, 1)$. Patterned after the simulation in Mao 2018, we will define our true models as follows:
 
 ### Propensity Score Model
 
@@ -109,16 +109,48 @@ $$
 Then, the survival time for subject $i$ is drawn from:
 
 $$
-T_i = \Bigg(\frac{-\log(u)}{\lambda \exp(L_i)}\Bigg)^{1/\nu}, 
+T_i^S = \Bigg(\frac{-\log(u_i^S)}{\lambda \exp(L_i)}\Bigg)^{1/\nu}, 
 \\
-\text{where } u \sim \text{Unif}(0, 1)
+\text{where } u_i^S \sim \text{Unif}(0, 1)
 $$
 
 ### Censoring Model
 
+The censoring model will be defined as the following exponential model:
 
+$$
+\begin{aligned}
+T^{C}_i \sim \text{Exponential}(\lambda K_i),
+\\
+\text{where } K_i = \gamma_0 + \gamma_2 X_{2i} + \gamma_3 X_{3i}
+\end{aligned}
+$$
+
+For simplicity, note that $T_i^C$ is independent of $T_i^S$ as well as treatment $Z_i$. This indicates that we are making the assuming that a subject's censoring time is dependent only on baseline covariates and is not influenced by their actual survival time or treatment assigned treatment.
+
+Algorithmically, the censoring time for subject $i$ will be drawn from:
+
+$$
+T^{C}_i=\frac{-\log(u^{C})}{\lambda \exp(K_i)},
+\\
+\text{where } u^{C} \sim \text{Unif}(0, 1)
+$$
+
+For subject $i$, the observed time, $T^{obs}$ is the minimum of $T_i^C$ and $T_i^S$ ($T^{obs} = \min (T_i^C, T_i^S)$), the censoring indicator for subject $i$, given the survival time $T_i$ and censoring time $T^C$ will be assigned as follows:
+
+$$
+\begin{aligned}
+C_i(T_i^S, T_i^C) = \begin{cases}
+1, \quad \text{ where }T_i^S > T_i^C
+\\
+0. \quad \text{ where }T_i^S \le T_i^C
+\end{cases}
+\end{aligned}
+$$
 
 # Data Simulation
+
+## DAG
 
 ## Treatment and Propensity Score
 
@@ -138,136 +170,26 @@ E\Big[P(Z = 1)\Big] &= E_X\Big[E_Z\Big(Z = 1 | \mathbf{X}_i\Big)\Big]
 \end{aligned}
 $$
 
-Let $X_1 \sim N(0, 1)$, $X_2 \sim \text{Bernoulli}(0.6)$, representing one continuous and one binary covariate upon which treatment is determined for each subject. Then, we see that we will need to select three $\beta$ coefficients to satisfy the form $g^{-1}(E[Z = 1 | X]) = \beta_0 + \beta_1 X_1 + \beta_2 X_2$, where $g(\mathbf{X}) = \frac{\exp(\boldsymbol{\beta X}^T)}{1 + \exp(\boldsymbol{\beta X}^T)} = E[Z = 1 | X]$. 
+As described previously, the covariates $X_1$ and $X_2$ in this model will be drawn from  $\text{Bernoulli}(0.6)$ and $N(0,1)$ distributions, respectively. Then, we see that we will need to select three $\beta$ coefficients to satisfy the form $g^{-1}(E[Z = 1 | X]) = \beta_0 + \beta_1 X_1 + \beta_2 X_2$, where $g(\mathbf{X}) = \frac{\exp(\boldsymbol{\beta X}^T)}{1 + \exp(\boldsymbol{\beta X}^T)} = E[Z = 1 | X]$. 
 
 For weak overlap, let $\beta_1 = \beta_2 = \beta_3 = 3$. For moderate overlap,  $\beta_1 = \beta_2 = \beta_3 = 1$. For strong overlap,  $\beta_1 = \beta_2 = \beta_3 = 0.1$. 
 
 ```{r}
-# covariate setting
-n <- 1000
-x1 <- rnorm(n, mean = 0, sd = 1)
-x2 <- runif(n, min = 0, max = 1)
-x2[x2 < 0.6] <- 1
-x2[x2 < 1] <- 0
-x3 <- rgamma(n, 1, 1)
-cov_df <- tibble(x1 = x1,
-                 x2 = x2,
-                 x3 = x3)
-
-xlist <-  list(x1, x2, x3)
+source(file = "propensity_score_functions.R")
 ```
 
 ```{r}
-# ###################################################
-# gem_prop_score_beta0()
-# - used to find beta0 given overlap parameters and 
-#   desired treatment proportion
-# - pass in covariate list and model parameters
-# - returns list containing selected beta0, full search
-#   procedure results, and ggplot of beta0
-# ###################################################
- 
-gen_prop_score_beta0 <- function(x=xlist, 
-                                 p=0.5, 
-                                 b, 
-                                 thresh = 0.01){
-  x1 <- x[[1]]
-  x2 <- x[[2]]
-  x3 <- x[[3]]
-  beta1 <- b[[1]]
-  beta2 <- b[[2]]
-  beta3 <- b[[3]]
-  
-  lower_bound <- -10
-  upper_bound <- 10
-  step <- 0.01
+# covariate setting
+n <- 100000
+```
 
-  cur_b0_step <- lower_bound
-
-  cur_res <- 
-    tibble(
-    )
-
-  while(cur_b0_step <= upper_bound){
-      cur_b0 <- cur_b0_step
-      cur_b1 <- beta1
-      cur_b2 <- beta2
-      cur_b3 <- beta3
-      cur_to_expit <- cur_b0 + cur_b1 * x1 + cur_b2 * x2 + cur_b3 * x3 
-      
-      probs <- exp(cur_to_expit)/(1 + exp(cur_to_expit))
-      cur_probs <- sum(probs > 0.5)/sum(!is.na(probs))
-      
-      cur_res <- bind_rows(cur_res, tibble(
-        b0 = cur_b0,
-        b1 = cur_b1,
-        b2 = cur_b2,
-        b3 = cur_b3,
-        probs = cur_probs
-      ))
-      
-  cur_b0_step <- cur_b0_step + step
-  }
-  b0_fin <- 
-    cur_res %>% 
-    filter(probs <= p + thresh & probs >= p - thresh) %>% 
-    pull(b0) %>% 
-    median()
-  
-  cur_res_gg <-
-    cur_res %>% 
-    ggplot(
-    aes(x = b0, y = probs)
-    ) + geom_line() +
-    geom_hline(yintercept = p, col = "red") +
-    labs(
-      x = "Beta_0",
-      y = "Probability of Treatment",
-      title = "Estimated Treatment Probability by Beta_0"
-    )
-
-  return(list(b0_emp = b0_fin, cur_res = cur_res, cur_res_gg = cur_res_gg))
-}
-
-
+```{r}
 low_overlap <- gen_prop_score_beta0(b = list(3, 3, 3))
 moderate_overlap <- gen_prop_score_beta0(b = list(1, 1, 1))
-high_overlap <- gen_prop_score_beta0(b = list(0.1, 0.1, 0.1))
+high_overlap <- gen_prop_score_beta0(b = list(0.5, 0.5, 0.5))
 ```
 
 ```{r}
-# ###################################################
-# gen_prop_scores()
-# - used to append propensity scores to covariate
-#   dataframe
-# - pass in beta list and covariate dataframe
-# - returns covariate dataframe with prop scores and
-#   treatment assignment appended
-# ###################################################
-
-gen_prop_scores <- function(b, covs = cov_df){
-  b0 <- b[[1]]
-  b1 <- b[[2]]
-  b2 <- b[[3]]
-  b3 <- b[[4]]
-  
-  out_df <- 
-    covs %>%
-    mutate(
-      prop_score = 
-        exp(b0 + b1*x1 + b2*x2 + b3*x3)/
-        (1 + exp(b0 + b1*x1 + b2*x2 + b3*x3))
-    )
-
-    for (i in 1:nrow(out_df)) {
-    out_df$trt[i] <- 
-      rbernoulli(1, p = out_df$prop_score[i]) %>%
-      as.numeric()
-    }
-
-  return(out_df)
-}
-
 cov_prop_high_overlap <- 
   gen_prop_scores(b = list(high_overlap[[1]], 0.1, 0.1, 0.1)) 
 
@@ -315,16 +237,13 @@ cov_prop_low_overlap %>%
        fill = "Treatment")
 ```
 
-```{r}
-# ####### covariate datasets ######
-#cov_prop_high_overlap
-#cov_prop_low_overlap
-#cov_prop_moderate_overlap
-```
-
 ## Outcomes
 
 The following generates the outcomes, drawn from a Cox-Weibull model.
+
+```{r}
+source(file = "outcome_functions.R")
+```
 
 ```{r}
 a0 <- 1
@@ -333,30 +252,13 @@ a3 <- 3
 nu <- 3
 lambda <- 0.0001
 
-# ###################################################
-# gen_outcomes()
-# - pass in covariate dataframe and model parameters
-# - returns covariate dataframe with outcomes
-# ###################################################
-
-gen_outcomes <- function(covs, lambda, nu, a = list(a0, a1, a3)){
-  out_df <- 
-    covs %>% 
-    bind_cols(tibble(u = runif(n))) %>%
-    mutate(L = a0*trt + a1*x1 + a3*x3,
-         time = (-log(u)/(lambda * exp(L)))^(1/nu)
-    )
-return(out_df)
-}
-
 ### test outcomes ###
-cov_df
 out_test_po_1 <- 
   gen_outcomes(cov_prop_high_overlap, lambda = lambda, nu = nu)
 
-out_test %>% 
+out_test_po_1 %>% 
   ggplot(
-  aes(x = time, fill = as.factor(trt))
+  aes(x = surv_time, fill = as.factor(trt))
 ) +
   geom_density(alpha=0.3) +
   labs(
@@ -369,8 +271,6 @@ out_test %>%
 
 ## Censoring
 
-< in progress! >
-
 
 
 ## True Estimand
@@ -381,7 +281,12 @@ $$
 \begin{aligned}
 T(1)\Big|(X_1, X_3) &\sim h_{Z = 1}(t|X_1, X_3) = \lambda v t^{v-1}\exp(\alpha_0 + \alpha_1 X_1 + \alpha_3 X_3)
 \\
+&= \lambda^*\nu t^{\nu - 1}, \text{ where } \lambda^* = \lambda  \exp(\alpha_0 + \alpha_1 X_1 + \alpha_3 X_3)
+\\
+\\
 T(0)\Big|(X_1, X_3) &\sim h_{Z = 0}(t|X_1, X_3) = \lambda v t^{v-1}\exp(\alpha_1 X_1 + \alpha_3 X_3)
+\\
+&= \lambda^*\nu t^{\nu - 1}, \text{ where } \lambda^* = \lambda  \exp(\alpha_1 X_1 + \alpha_3 X_3)
 \end{aligned}
 $$
 
@@ -427,7 +332,7 @@ run_true_expected_time <- function(n, params){
   ###### define confounders here #####
   x_1 <- rbernoulli(n, 0.6)
   x_2 <- rnorm(n)
-  x_3 <- rgamma(n, 1, 1)
+  x_3 <- rnorm(n, 0, 0.5)
 
   ###### define l here #####
   l <- alpha_0 + alpha_1*x_1 + alpha_3*x_3 
@@ -449,12 +354,12 @@ run_true_expected_time <- function(n, params){
 }
 
 m <- 1000000
-t_1_true_val <- run_true_expected_time(n = m, params = list(-0.2, 2, 1.5, 3, 0.0001, 3)) %>% round(digits = 3)
+t_1_true_val <- run_true_expected_time(n = m, params = list(-1, 2, 1.5, 3, 0.0001, 3)) %>% round(digits = 3)
 t_0_true_val <- run_true_expected_time(n = m, params = list(0, 2, 1.5, 3, 0.0001, 3)) %>% round(digits = 3)
 t_1_true_val - t_0_true_val
 ```
 
-From conducting this procedure, and under the current model parameters, we find that the estimated true value of $\tau_1 = E[T(1)]$ is `r t_1_true_val` and the estimated true value of $\tau_0 = E[T(0)]$ is `r t_0_true_val`. Thus, we have an estimated true treatment effect of $\tau = E[T(1) - T(0)] = $ `r t_1_true_val - t_0_true_val` in this current setting. 
+From conducting this procedure, and under the current model parameters, we find that the estimated true value of $\tau_1 = E[T(1)]$ is `r t_1_true_val` and the estimated true value of $\tau_0 = E[T(0)]$ is `r t_0_true_val`. Thus, we have an estimated true treatment effect of $\tau = E[T(1) - T(0)] =$ `r t_1_true_val - t_0_true_val` in this current setting. 
 
 
 
