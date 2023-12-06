@@ -120,7 +120,7 @@ The censoring model will be defined as the following exponential model:
 
 $$
 \begin{aligned}
-T^{C}_i \sim \text{Exponential}(\lambda K_i),
+T^{C}_i \sim \text{Exponential}(\lambda \exp(K_i)),
 \\
 \text{where } K_i = \gamma_0 + \gamma_2 X_{2i} + \gamma_3 X_{3i}
 \end{aligned}

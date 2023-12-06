@@ -1,4 +1,6 @@
 
+library(tidyverse)
+
 gen_cur_covs <- function(n=1000){
   
   x1 <- runif(n, min = 0, max = 1)

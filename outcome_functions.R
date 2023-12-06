@@ -1,11 +1,11 @@
-# ####################################
+# ################################################
 # 
 # Program: outcome_functions.R
 #
 # Description: Contains functions for outcome 
 #              and censoring generation
 # 
-# ####################################
+# ################################################
 
 
 # ###################################################
@@ -14,7 +14,11 @@
 # - returns covariate dataframe with outcomes
 # ###################################################
 
-gen_outcomes <- function(covs, lambda=0.0001, nu=3, a = list(a0, a1, a3)){
+gen_outcomes <- 
+  function(covs, 
+           lambda=0.0001, 
+           nu=3, 
+           a = list(a0, a1, a3)){
   a0 <- a[[1]]
   a1 <- a[[2]]
   a3 <- a[[3]]
@@ -40,7 +44,10 @@ gen_outcomes <- function(covs, lambda=0.0001, nu=3, a = list(a0, a1, a3)){
 #   and censoring indicator
 # ###################################################
 
-gen_censor <- function(covs, lambda=0.0001, nu=3, g = list(g0, g2, g3)){
+gen_censor <- function(covs, 
+                       lambda=0.0001, 
+                       nu=3, 
+                       g = list(g0, g2, g3)){
   g0 <- g[[1]]
   g2 <- g[[2]]
   g3 <- g[[3]]
@@ -49,7 +56,7 @@ gen_censor <- function(covs, lambda=0.0001, nu=3, g = list(g0, g2, g3)){
   out_df <- 
     covs %>% 
     bind_cols(tibble(u_cens = runif(n))) %>%
-    mutate(K = exp(g0 + g2*x2 + g3*x3),
+    mutate(K = g0 + g2*x2 + g3*x3,
            cens_time = (-log(u_cens)/(lambda*exp(K))),
            cens_ind = ifelse(cens_time < surv_time, 1, 0)
     ) %>% 
@@ -69,7 +76,7 @@ gen_censor <- function(covs, lambda=0.0001, nu=3, g = list(g0, g2, g3)){
 #   procedure results, and ggplot of beta0
 # ###################################################
 
-gen_censor_gamma0 <- function(n_gen=1000000, 
+gen_censor_gamma0 <- function(n_gen=10000, 
                               p_cens=0.25, 
                               g, 
                               b,
@@ -78,7 +85,7 @@ gen_censor_gamma0 <- function(n_gen=1000000,
                               nu = 3,
                               thresh = 0.01){
   lower_bound <- -10
-  upper_bound <- 1
+  upper_bound <- 10
   step <- 0.01
   
   cur_g0_step <- lower_bound
@@ -128,125 +135,127 @@ gen_censor_gamma0 <- function(n_gen=1000000,
 
 ### parameter setting -- gamma0 ###
 
+g <- list(2, 4)
+
 # scenario 1
 
-#cur_gamma_sim_scen1 <- 
-#  gen_censor_gamma0(
-#    g = g,
-#    b = high_b,
-#    a = high_a,
-#    p_cens = low_p_cens
-#    )
+cur_gamma_sim_scen1 <- 
+  gen_censor_gamma0(
+    g = list(2,4),
+    b = high_b,
+    a = high_a,
+    p_cens = low_p_cens
+    )
 
 # scenario 2
 
-#cur_gamma_sim_scen2 <- 
-#  gen_censor_gamma0(
-#    g = g,
-#    b = med_b,
-#    a = high_a,
-#    p_cens = low_p_cens
-#  )
+cur_gamma_sim_scen2 <- 
+  gen_censor_gamma0(
+    g = g,
+    b = med_b,
+    a = high_a,
+    p_cens = low_p_cens
+  )
 
 # scenario 3
 
-#cur_gamma_sim_scen3 <- 
-#  gen_censor_gamma0(
-#    g = g,
-#    b = low_b,
-#    a = high_a,
-#    p_cens = low_p_cens
-#  )
+cur_gamma_sim_scen3 <- 
+  gen_censor_gamma0(
+    g = g,
+    b = low_b,
+    a = high_a,
+    p_cens = low_p_cens
+  )
 
 # scenario 4
 
-#cur_gamma_sim_scen4 <- 
-#  gen_censor_gamma0(
-#    g = g,
-#    b = high_b,
-#    a = low_a,
-#    p_cens = low_p_cens
-#  )
+cur_gamma_sim_scen4 <- 
+  gen_censor_gamma0(
+    g = g,
+    b = high_b,
+    a = low_a,
+    p_cens = low_p_cens
+  )
 
 # scenario 5
 
-#cur_gamma_sim_scen5 <- 
-#  gen_censor_gamma0(
-#    g = g,
-#    b = med_b,
-#    a = low_a,
-#    p_cens = low_p_cens
-#  )
+cur_gamma_sim_scen5 <- 
+  gen_censor_gamma0(
+    g = g,
+    b = med_b,
+    a = low_a,
+    p_cens = low_p_cens
+  )
 
 # scenario 6
 
-#cur_gamma_sim_scen6 <- 
-#  gen_censor_gamma0(
-#    g = g,
-#    b = low_b,
-#    a = low_a,
-#    p_cens = low_p_cens
-#  )
+cur_gamma_sim_scen6 <- 
+  gen_censor_gamma0(
+    g = g,
+    b = low_b,
+    a = low_a,
+    p_cens = low_p_cens
+  )
 
 # scenario 7
 
-#cur_gamma_sim_scen7 <- 
-#  gen_censor_gamma0(
-#    g = g,
-#    b = high_b,
-#    a = high_a,
-#    p_cens = high_p_cens
-#  )
+cur_gamma_sim_scen7 <- 
+  gen_censor_gamma0(
+    g = g,
+    b = high_b,
+    a = high_a,
+    p_cens = high_p_cens
+  )
 
 # scenario 8
 
-#cur_gamma_sim_scen8 <- 
-#  gen_censor_gamma0(
-#    g = g,
-#    b = med_b,
-#    a = high_a,
-#    p_cens = high_p_cens
-#  )
+cur_gamma_sim_scen8 <- 
+  gen_censor_gamma0(
+    g = g,
+    b = med_b,
+    a = high_a,
+    p_cens = high_p_cens
+  )
 
 # scenario 9
 
-#cur_gamma_sim_scen9 <- 
-#  gen_censor_gamma0(
-#    g = g,
-#    b = low_b,
-#    a = high_a,
-#    p_cens = high_p_cens
-#  )
+cur_gamma_sim_scen9 <- 
+  gen_censor_gamma0(
+    g = g,
+    b = low_b,
+    a = high_a,
+    p_cens = high_p_cens
+  )
 
 # scenario 10
 
-#cur_gamma_sim_scen10 <- 
-#  gen_censor_gamma0(
-#    g = g,
-#    b = high_b,
-#    a = low_a,
-#    p_cens = high_p_cens
-#  )
+cur_gamma_sim_scen10 <- 
+  gen_censor_gamma0(
+    g = g,
+    b = high_b,
+    a = low_a,
+    p_cens = high_p_cens
+  )
 
 # scenario 11
 
-#cur_gamma_sim_scen11 <- 
-#  gen_censor_gamma0(
-#    g = g,
-#    b = med_b,
-#    a = low_a,
-#    p_cens = high_p_cens
-#  )
+cur_gamma_sim_scen11 <- 
+  gen_censor_gamma0(
+    g = g,
+    b = med_b,
+    a = low_a,
+    p_cens = high_p_cens
+  )
 
 # scenario 12
 
-#cur_gamma_sim_scen12 <- 
-#  gen_censor_gamma0(
-#    g = g,
-#    b = low_b,
-#    a = low_a,
-#    p_cens = high_p_cens
-#  )
+cur_gamma_sim_scen12 <- 
+  gen_censor_gamma0(
+    g = g,
+    b = low_b,
+    a = low_a,
+    p_cens = high_p_cens
+  )
 
 
 # ### true treatment effects ###
