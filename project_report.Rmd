@@ -19,6 +19,7 @@ set.seed(20220417)
 library(tidyverse)
 library(bookdown)
 library(latex2exp)
+library(progress)
 
 # set knitr defaults
 knitr::opts_chunk$set(
@@ -103,6 +104,11 @@ $$
 h(t|\mathbf{X}_i) &= h_0(t) \exp(L_i),
 \\
 \text{where } h_0(t) &= \lambda \nu t^{\nu-1}, \text{ and } L_i = a_0 Z_i + a_1 X_{1i} + a_3 X_{3i}
+\\
+\\
+S(T_i^S = t) &= \exp(-\lambda t^v \exp (L_i))
+\\
+ &= 1 - F(t)
 \end{aligned}
 $$
 
@@ -123,6 +129,9 @@ $$
 T^{C}_i \sim \text{Exponential}(\lambda \exp(K_i)),
 \\
 \text{where } K_i = \gamma_0 + \gamma_2 X_{2i} + \gamma_3 X_{3i}
+\\
+\\
+P(T_i^C = t) = \exp(-\lambda t \exp (K_i))
 \end{aligned}
 $$
 
@@ -175,28 +184,29 @@ As described previously, the covariates $X_1$ and $X_2$ in this model will be dr
 For weak overlap, let $\beta_1 = \beta_2 = \beta_3 = 3$. For moderate overlap,  $\beta_1 = \beta_2 = \beta_3 = 1$. For strong overlap,  $\beta_1 = \beta_2 = \beta_3 = 0.1$. 
 
 ```{r}
+source(file = "misc_functions.R")
 source(file = "propensity_score_functions.R")
 ```
 
 ```{r}
 # covariate setting
 n <- 100000
-
+covs_df <- gen_cur_covs_tib(n = n)
 cov_prop_high_overlap <- 
-  gen_prop_scores(b = list(high_overlap[[1]], 0.1, 0.1, 0.1)) 
+  gen_prop_scores(b = list(-0.05, 0.1, 0.1, 0.1), covs = covs_df) 
 
 
 cov_prop_moderate_overlap <- 
-  gen_prop_scores(b = list(moderate_overlap[[1]], 1, 1, 1)) 
+  gen_prop_scores(b = list(-0.475, 1, 1, 1), covs = covs_df) 
 
 
 cov_prop_low_overlap <- 
-  gen_prop_scores(b = list(low_overlap[[1]], 3, 3, 3)) 
+  gen_prop_scores(b = list(-1.43, 3, 3, 3), covs = covs_df) 
 ```
 
 The following plots show the overlap of these three simulations:
 
-```{r}
+```{r, eval=FALSE}
 cov_prop_high_overlap %>% 
   ggplot(
   aes(x = prop_score, fill = as.factor(trt))
@@ -306,7 +316,7 @@ $$
 
 To obtain the true value estimates of $E[T(1)]$ and $E[T(0)]$, we will draw 1000000 samples each from the distributions of $X_1$ and $X_3$ to simulate the distributional behavior of each of these random variables, and sum the computed conditional expectations of $T(1)|(X_{1j}, X_{3j})$ and $T(0)|(X_{1k}, X_{3k})$ for each sample $j$ and $k$, where $j = k = 1000000$.
 
-```{r, message = TRUE}
+```{r, message = TRUE, eval=FALSE}
 library(progress)
 library(beepr)
 library(patchwork)

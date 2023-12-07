@@ -264,7 +264,7 @@ library(progress)
 library(beepr)
 library(patchwork)
 
-run_true_expected_time <- function(n, params){
+run_true_survival <- function(n, params, t_end = 5){
   
   alpha_0 <- params[[1]]
   alpha_1 <- params[[2]]

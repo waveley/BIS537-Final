@@ -10,21 +10,6 @@
 # 
 # ####################################
 
-# parameter setting
-
-high_b <- list(-0.05,	0.1, 0.1)
-med_b <- list(-0.475, 1, 1)
-low_b <- list(-1.43, 3, 3)
-
-high_a <- list(-1, 2, 3)
-low_a <- list(-0.1, 2, 3)
-
-low_g <- list(-3.95, 2, 4)
-high_g <- list(-1.21, 2, 4)
-
-low_p_cens <- 0.25
-high_p_cens <- 0.5
-
 source("misc_functions.R")
 source("propensity_score_functions.R")
 source("outcome_functions.R")
@@ -59,13 +44,18 @@ gen_data <- function(n, n_df, betas, alphas, gammas){
                    10, 
                     betas = high_b, 
                     alphas = high_a, 
-                    gammas = high_g)
+                    gammas = high_high_g)
 
 ipw <- function(df){
-  df <- cur_tib[[1]]
-  trt_res <- glm(trt ~ x1 + x2 + x3, family = "binomial", data = df)
   
-  cens_res <- 
+ df <- cur_tib[[2]]
+  df %>% 
+    summarise(
+      censoring_rate = sum(cens_ind)/n()
+    )
+  
+  trt_res <- glm(trt ~ x1 + x2 + x3, family = "binomial", data = df)
+  cens_res <- glm(cens_ind ~ x1 + x2 + x3, family = "binomial", data = df)
   
   summary(cens_res)
   summary(trt_res)
@@ -100,16 +90,8 @@ ipw <- function(df){
       mean_x3 = mean(x3),
       weighted_mean_x3 = mean(x3*cens_weights)
     )
-
-  
-  hist(df$cens_weights)
-  hist(df$trt_weights)
-  df %>% 
-    filter(cens_weights < quantile(cens_weights, 0.99) & cens_weights > quantile(cens_weights, 0.01)) %>%
-    pull(cens_weights) %>% 
-    hist()
 }
- 
+
 tibble(
   simmed_tibs = cur_tib,
   res = map(simmed_tibs, nrow) %>% unlist()
