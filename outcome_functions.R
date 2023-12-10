@@ -285,23 +285,23 @@ run_true_survival <- function(n, params, t_end = 5){
   
   pb <- progress_bar$new(total = n, format = "running sim of size :total... [:bar]   :percent completed; eta: :eta")
   
-  #  for(i in 1:n){
-  #    pb$tick()
-  cur_samp <- runif(n)
-  calculated_samp <- (-log(cur_samp)/(lambda*exp(l)))^(1/v)
-  t <- mean(calculated_samp)
-  #  }
+    for(i in 1:n){
+      pb$tick()
+      cur_samp <- runif(n)
+      calculated_samp <- (-log(cur_samp)/(lambda*exp(l)))^(1/v)
+      t <- mean(calculated_samp > t_end)
+    }
   
-  #  t_hat <- mean(t)
-  #  beep()
-  return(t)
+    t_hat <- mean(t)
+    beep()
+  return(t_hat)
 }
 
-m <- 10000000
+m <- 100000
 
 gen_expected_ace <- function(n, params1, params0){
-  t_1_true_val <- run_true_expected_time(n, params = params1) %>% round(digits = 3)
-  t_0_true_val <- run_true_expected_time(n, params = params0) %>% round(digits = 3)
+  t_1_true_val <- run_true_survival(n, params = params1) %>% round(digits = 3)
+  t_0_true_val <- run_true_survival(n, params = params0) %>% round(digits = 3)
   return(t_1_true_val - t_0_true_val)
 }
 

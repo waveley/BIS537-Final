@@ -47,10 +47,10 @@ low_b <- list(-1.43, 3, 3)
 high_a <- list(-1, 2, 3)
 low_a <- list(-0.1, 2, 3)
 
-low_low_g <- list(1.4, 2, 4)
-low_high_g <- list(1.2, 2, 4)
-high_low_g <- list(3.55, 2, 4)
-high_high_g <- list(3.71, 2, 4)
+low_high_g <- list(1.04, 2, 4) # low censoring, high trt
+low_low_g <- list(1.2, 2, 4) # low censoring, low trt
+high_high_g <- list(3.55, 2, 4) # high censoring, high trt
+high_low_g <- list(3.71, 2, 4) # high censoring, low trt
 
 low_p_cens <- 0.25
 high_p_cens <- 0.5

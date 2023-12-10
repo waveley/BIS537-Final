@@ -161,6 +161,20 @@ $$
 
 ## DAG
 
+```{r}
+dag <- ggdag::dagify(
+  A0 ~ L0,
+  L1 ~  A0, 
+  A1 ~  L1 + A0,
+  D1 ~ L0 + L1 + A0 + A1 ,                   
+  exposure = c("A0", "A1"),
+  outcome = "D1"
+                ) 
+ggdag_classic(dag, layout = "circle") + theme_dag_blank()
+```
+
+
+
 ## Treatment and Propensity Score
 
 The propensity score is defined as follows:
