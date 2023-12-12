@@ -1,0 +1,103 @@
+---
+title: "DAG"
+author: "Waveley Qiu"
+date: "2023-12-10"
+output:
+  pdf_document: default
+header-includes: 
+  - \usepackage{amsmath,amssymb,amsthm,amsfonts,bbm,graphics,mathrsfs}
+  - \usepackage{geometry}
+  - \usepackage{tikz}
+  - \usetikzlibrary{shapes,arrows,decorations}
+---
+
+```{tikz, echo = FALSE}
+\tikzstyle{block} = [rectangle, draw, text width=6em, text centered, rounded corners, minimum height=4em]
+\tikzstyle{line} = [draw, -latex]
+\tikzstyle{doublearr}=[latex-latex, black, line width=0.5pt]
+  \begin{tikzpicture}[auto]
+      % Place nodes
+      \node [block] (Z) {Treatment};
+      \node [block, above right of = Z, xshift = 2cm, yshift = 3cm] (X1) {$X_1 \sim \text{Bernoulli}(0.6)$};
+      \node [block, right of = X1, xshift = 2.5cm] (X2) {$X_2 \sim N(0,1)$};
+      \node [block, right of = X2, xshift = 2.5cm] (X3) {$X_3 \sim \text{Gamma}(1,1)$};
+      \node [block, right of = Z, xshift = 5cm] (T) {Survival Time};
+      \node [block, right of = T, xshift = 5cm] (C) {Censoring Time};
+      \node [block, below of = T, yshift = -3cm] (OT) {Observed Time};
+      % Draw edges
+      \path [line] (X1) -- (Z);
+      \path [line] (X2) -- (Z);
+      \path [line] (X2) -- (T);
+      \path [line] (X3) -- (T);
+      \path [line] (X1) -- (C);
+      \path [line] (X3) -- (C);
+      \path [line, color=red] (Z) -- (T);
+      \path [line] (T) -- (OT);
+      \path [line] (C) -- (OT);
+  \end{tikzpicture}
+```
+
+\newpage
+```{tikz, echo = FALSE}
+\tikzstyle{block} = [rectangle, draw, text width=6em, text centered, rounded corners, minimum height=4em]
+\tikzstyle{calculation} = [circle, draw, text width=4em, text centered, minimum height=4em]
+\tikzstyle{result} = [rectangle, draw, text width=7em, text centered, minimum height=4em]
+
+\tikzstyle{line} = [draw, -latex]
+\tikzstyle{doublearr}=[latex-latex, black, line width=0.5pt]
+  \begin{tikzpicture}[auto]
+      % Place nodes
+      \node [block] (D) {Observed Data};
+      \node [calculation, below left of = D, xshift = -3cm, yshift = -2cm] (IPTW) {IPTW};
+      \node [calculation, below right of = D, xshift = 3cm, yshift = -2cm] (IPCW) {IPCW};
+      \node [block, text width = 6cm, below of = D, yshift = -4cm] (WD) {IPTW $\times$ IPCW Pseudo-population};
+      \node [result, below of = WD, yshift = -2cm] (EY) {$\hat{E}[Y(1) - Y(0)]$};
+      % Draw edges
+      \path [line] (D) -- (IPTW);
+      \path [line] (D) -- (IPCW);
+      \path [line] (IPTW) -- (WD);
+      \path [line] (IPCW) -- (WD);
+      \path [line] (WD) -- (EY);
+  \end{tikzpicture}
+```
+
+\newpage
+```{tikz, echo = FALSE}
+\tikzstyle{block} = [rectangle, draw, text width=6em, text centered, rounded corners, minimum height=4em]
+\tikzstyle{calculation} = [circle, draw, text width=4em, text centered, minimum height=4em]
+\tikzstyle{result} = [rectangle, draw, text width=7em, text centered, minimum height=4em]
+
+\tikzstyle{line} = [draw, -latex]
+\tikzstyle{doublearr}=[latex-latex, black, line width=0.5pt]
+  \begin{tikzpicture}[auto]
+      % Place nodes
+      \node [block] (D) {Observed Data};
+      \node [calculation, below of = D, yshift = -1.5cm] (IPTW) {IPTW};
+      \node [block, text width = 6cm, below of = IPTW, yshift = -1.5cm] (WD1) {IPTW Pseudo-population};
+      \node [calculation, below of = WD1, yshift = -1.5cm] (IPCW) {IPCW};
+      \node [block, text width = 6cm, below of = IPCW, yshift = -1.5cm] (WD2) {IPCW $\circ$ IPTW Pseudo-population};
+      \node [result, below of = WD2, yshift = -1.5cm] (EY) {$\hat{E}[Y(1) - Y(0)]$};
+
+      % second set of nodes
+
+      \node [block, right of = D, xshift =8cm] (DR) {Observed Data};
+      \node [calculation, below of = DR, yshift = -1.5cm] (IPCWR) {IPCW};
+      \node [block, text width = 6cm, below of = IPCWR, yshift = -1.5cm] (WD1R) {IPCW Pseudo-population};
+      \node [calculation, below of = WD1R, yshift = -1.5cm] (IPTWR) {IPTW};
+      \node [block, text width = 6cm, below of = IPTWR, yshift = -1.5cm] (WD2R) {IPTW $\circ$ IPCW Pseudo-population};
+      \node [result, below of = WD2R, yshift = -1.5cm] (EYR) {$\hat{E}[Y(1) - Y(0)]$};
+
+  % Draw edges
+      \path [line] (D) -- (IPTW);
+      \path [line] (IPTW) -- (WD1);
+      \path [line] (WD1) -- (IPCW);
+      \path [line] (IPCW) -- (WD2);
+      \path [line] (WD2) -- (EY);
+
+      \path [line] (DR) -- (IPCWR);
+      \path [line] (IPCWR) -- (WD1R);
+      \path [line] (WD1R) -- (IPTWR);
+      \path [line] (IPTWR) -- (WD2R);
+      \path [line] (WD2R) -- (EYR);
+  \end{tikzpicture}
+```

@@ -12,6 +12,10 @@ header-includes:
   - \usepackage{amsfonts}  
   - \usepackage{amsmath}
   - \usepackage{amsthm}
+  - \usepackage{amssymb,,bbm,graphics,mathrsfs}
+  - \usepackage{geometry}
+  - \usepackage{tikz}
+  - \usetikzlibrary{shapes,arrows,decorations}
 ---
 
 ```{r setup, include=FALSE}
@@ -20,6 +24,7 @@ library(tidyverse)
 library(bookdown)
 library(latex2exp)
 library(progress)
+library(patchwork)
 
 # set knitr defaults
 knitr::opts_chunk$set(
@@ -28,7 +33,7 @@ knitr::opts_chunk$set(
   message = FALSE,
   fig.align = "center",
   fig.width = 6,
-  fig.asp   = .6,
+  fig.asp   = .5,
   out.width = "90%",
   cache = FALSE
 )
@@ -59,9 +64,9 @@ scale_fill_discrete   = scale_fill_viridis_d
 
 While the ideal setting to conduct causal inference on survival outcomes are randomized experiments, as is true for most areas of research, it is often the case that such an experimental setting is difficult or impossible to achieve. As such, when treatment and control groups are not exchangeable, it may be necessary to implement causal inference methods to address the absence of direct counterfactual proxies.
 
-Time-to-event outcomes are of great interest to investigators across a variety of clinical settings, however present analytical difficulties even within the constrains of a randomized controlled trial. In particular, the non-observation of an event yet loss of a subject's data, or censoring, presents another missing data issue that the investigator has need to consider. 
+Time-to-event outcomes are of great interest to investigators across a variety of clinical settings, however present analytical difficulties even within the constrains of a randomized controlled trial. In particular, the non-observation of an event yet loss of a subject's data, or censoring, presents another missing data issue that the investigator has need to consider. This issue is compounded in the setting of a non-randomized or observational study, where exchangeability between treatment groups cannot be assumed of the collected data.
 
-In this study, we will investigate two possible methods in which this dual-level missing data issue can be addressed. First, is an iterated weighting method, in which weights based on the probability of treatment and the probability of censoring are calculated and used together in estimating the causal estimand of interest. We then will investigate a matching and weighting combination method, in which the probability of censoring based on baseline covariates will be used to match censored records with complete records and the matched records will be weighted based on their propensity scores. 
+In this study, we will investigate two possible methods in which this dual-level missing data issue can be addressed. First, is a two-arm weighting method, in which weights based on the probability of treatment and the probability of censoring are calculated and used together in estimating the causal estimand of interest. The second is a single-arm sequential weighting method, in which weights based on the probability of treatment are used to construct a pseudo-population from which weights based on the probability of censoring indication are derived -- the final compositely-weighted dataset will be used to estimate the causal estimand..
 
 ## Causal Survival Estimands
 
@@ -161,18 +166,31 @@ $$
 
 ## DAG
 
-```{r}
-dag <- ggdag::dagify(
-  A0 ~ L0,
-  L1 ~  A0, 
-  A1 ~  L1 + A0,
-  D1 ~ L0 + L1 + A0 + A1 ,                   
-  exposure = c("A0", "A1"),
-  outcome = "D1"
-                ) 
-ggdag_classic(dag, layout = "circle") + theme_dag_blank()
+```{tikz, echo = FALSE, fig.height = 4, fig.asp = 0.2}
+\tikzstyle{block} = [rectangle, draw, text width=6em, text centered, rounded corners, minimum height=4em]
+\tikzstyle{line} = [draw, -latex]
+\tikzstyle{doublearr}=[latex-latex, black, line width=0.5pt]
+  \begin{tikzpicture}[auto]
+      % Place nodes
+      \node [block] (Z) {Treatment};
+      \node [block, above right of = Z, xshift = 2cm, yshift = 1cm] (X1) {$X_1 \sim \text{Bernoulli}(0.6)$};
+      \node [block, right of = X1, xshift = 2.5cm] (X2) {$X_2 \sim N(0,1)$};
+      \node [block, right of = X2, xshift = 2.5cm] (X3) {$X_3 \sim \text{Gamma}(1,1)$};
+      \node [block, below of = X2, yshift = -0.5cm] (T) {Survival Time};
+      \node [block, right of = T, xshift = 5cm] (C) {Censoring Time};
+      \node [block, below of = T, yshift = -1cm] (OT) {Observed Time};
+      % Draw edges
+      \path [line] (X1) -- (Z);
+      \path [line] (X2) -- (Z);
+      \path [line] (X2) -- (T);
+      \path [line] (X3) -- (T);
+      \path [line] (X1) -- (C);
+      \path [line] (X3) -- (C);
+      \path [line, color=red] (Z) -- (T);
+      \path [line] (T) -- (OT);
+      \path [line] (C) -- (OT);
+  \end{tikzpicture}
 ```
-
 
 
 ## Treatment and Propensity Score
@@ -220,8 +238,8 @@ cov_prop_low_overlap <-
 
 The following plots show the overlap of these three simulations:
 
-```{r, eval=FALSE}
-cov_prop_high_overlap %>% 
+```{r, eval=TRUE, fig.width = 8, fig.height = 2}
+high_overlap_gg <- cov_prop_high_overlap %>% 
   ggplot(
   aes(x = prop_score, fill = as.factor(trt))
 ) + 
@@ -231,7 +249,8 @@ cov_prop_high_overlap %>%
        title = "High Overlap",
        fill = "Treatment")
 
-cov_prop_moderate_overlap %>% 
+med_overlap_gg <- 
+  cov_prop_moderate_overlap %>% 
   ggplot(
   aes(x = prop_score, fill = as.factor(trt))
 ) + 
@@ -241,8 +260,7 @@ cov_prop_moderate_overlap %>%
        title = "Moderate Overlap",
        fill = "Treatment")
 
-
-cov_prop_low_overlap %>% 
+low_overlap_gg <- cov_prop_low_overlap %>% 
   ggplot(
   aes(x = prop_score, fill = as.factor(trt))
 ) + 
@@ -251,6 +269,9 @@ cov_prop_low_overlap %>%
        y = "Frequency",
        title = "Low Overlap",
        fill = "Treatment")
+
+patched_ggs <- high_overlap_gg + med_overlap_gg + low_overlap_gg 
+patched_ggs + plot_layout(guides = "collect")
 ```
 
 ## Outcomes
@@ -375,7 +396,6 @@ t_0_true_val <- run_true_expected_time(n = m, params = list(0, 2, 1.5, 3, 0.0001
 t_1_true_val - t_0_true_val
 ```
 
-From conducting this procedure, and under the current model parameters, we find that the estimated true value of $\tau_1 = E[T(1)]$ is `r t_1_true_val` and the estimated true value of $\tau_0 = E[T(0)]$ is `r t_0_true_val`. Thus, we have an estimated true treatment effect of $\tau = E[T(1) - T(0)] =$ `r t_1_true_val - t_0_true_val` in this current setting. 
 
 
 

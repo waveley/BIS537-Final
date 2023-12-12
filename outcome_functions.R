@@ -134,178 +134,178 @@ gen_censor_gamma0 <- function(n_gen=10000,
 }
 
 ### parameter setting -- gamma0 ###
+# 
+# g <- list(2, 4)
 
-g <- list(2, 4)
-
-# scenario 1
-
-cur_gamma_sim_scen1 <- 
-  gen_censor_gamma0(
-    g = list(2,4),
-    b = high_b,
-    a = high_a,
-    p_cens = low_p_cens
-    )
-
-# scenario 2
-
-cur_gamma_sim_scen2 <- 
-  gen_censor_gamma0(
-    g = g,
-    b = med_b,
-    a = high_a,
-    p_cens = low_p_cens
-  )
-
-# scenario 3
-
-cur_gamma_sim_scen3 <- 
-  gen_censor_gamma0(
-    g = g,
-    b = low_b,
-    a = high_a,
-    p_cens = low_p_cens
-  )
-
-# scenario 4
-
-cur_gamma_sim_scen4 <- 
-  gen_censor_gamma0(
-    g = g,
-    b = high_b,
-    a = low_a,
-    p_cens = low_p_cens
-  )
-
-# scenario 5
-
-cur_gamma_sim_scen5 <- 
-  gen_censor_gamma0(
-    g = g,
-    b = med_b,
-    a = low_a,
-    p_cens = low_p_cens
-  )
-
-# scenario 6
-
-cur_gamma_sim_scen6 <- 
-  gen_censor_gamma0(
-    g = g,
-    b = low_b,
-    a = low_a,
-    p_cens = low_p_cens
-  )
-
-# scenario 7
-
-cur_gamma_sim_scen7 <- 
-  gen_censor_gamma0(
-    g = g,
-    b = high_b,
-    a = high_a,
-    p_cens = high_p_cens
-  )
-
-# scenario 8
-
-cur_gamma_sim_scen8 <- 
-  gen_censor_gamma0(
-    g = g,
-    b = med_b,
-    a = high_a,
-    p_cens = high_p_cens
-  )
-
-# scenario 9
-
-cur_gamma_sim_scen9 <- 
-  gen_censor_gamma0(
-    g = g,
-    b = low_b,
-    a = high_a,
-    p_cens = high_p_cens
-  )
-
-# scenario 10
-
-cur_gamma_sim_scen10 <- 
-  gen_censor_gamma0(
-    g = g,
-    b = high_b,
-    a = low_a,
-    p_cens = high_p_cens
-  )
-
-# scenario 11
-
-cur_gamma_sim_scen11 <- 
-  gen_censor_gamma0(
-    g = g,
-    b = med_b,
-    a = low_a,
-    p_cens = high_p_cens
-  )
-
-# scenario 12
-
-cur_gamma_sim_scen12 <- 
-  gen_censor_gamma0(
-    g = g,
-    b = low_b,
-    a = low_a,
-    p_cens = high_p_cens
-  )
+# # scenario 1
+# 
+# cur_gamma_sim_scen1 <- 
+#   gen_censor_gamma0(
+#     g = list(2,4),
+#     b = high_b,
+#     a = high_a,
+#     p_cens = low_p_cens
+#     )
+# 
+# # scenario 2
+# 
+# cur_gamma_sim_scen2 <- 
+#   gen_censor_gamma0(
+#     g = g,
+#     b = med_b,
+#     a = high_a,
+#     p_cens = low_p_cens
+#   )
+# 
+# # scenario 3
+# 
+# cur_gamma_sim_scen3 <- 
+#   gen_censor_gamma0(
+#     g = g,
+#     b = low_b,
+#     a = high_a,
+#     p_cens = low_p_cens
+#   )
+# 
+# # scenario 4
+# 
+# cur_gamma_sim_scen4 <- 
+#   gen_censor_gamma0(
+#     g = g,
+#     b = high_b,
+#     a = low_a,
+#     p_cens = low_p_cens
+#   )
+# 
+# # scenario 5
+# 
+# cur_gamma_sim_scen5 <- 
+#   gen_censor_gamma0(
+#     g = g,
+#     b = med_b,
+#     a = low_a,
+#     p_cens = low_p_cens
+#   )
+# 
+# # scenario 6
+# 
+# cur_gamma_sim_scen6 <- 
+#   gen_censor_gamma0(
+#     g = g,
+#     b = low_b,
+#     a = low_a,
+#     p_cens = low_p_cens
+#   )
+# 
+# # scenario 7
+# 
+# cur_gamma_sim_scen7 <- 
+#   gen_censor_gamma0(
+#     g = g,
+#     b = high_b,
+#     a = high_a,
+#     p_cens = high_p_cens
+#   )
+# 
+# # scenario 8
+# 
+# cur_gamma_sim_scen8 <- 
+#   gen_censor_gamma0(
+#     g = g,
+#     b = med_b,
+#     a = high_a,
+#     p_cens = high_p_cens
+#   )
+# 
+# # scenario 9
+# 
+# cur_gamma_sim_scen9 <- 
+#   gen_censor_gamma0(
+#     g = g,
+#     b = low_b,
+#     a = high_a,
+#     p_cens = high_p_cens
+#   )
+# 
+# # scenario 10
+# 
+# cur_gamma_sim_scen10 <- 
+#   gen_censor_gamma0(
+#     g = g,
+#     b = high_b,
+#     a = low_a,
+#     p_cens = high_p_cens
+#   )
+# 
+# # scenario 11
+# 
+# cur_gamma_sim_scen11 <- 
+#   gen_censor_gamma0(
+#     g = g,
+#     b = med_b,
+#     a = low_a,
+#     p_cens = high_p_cens
+#   )
+# 
+# # scenario 12
+# 
+# cur_gamma_sim_scen12 <- 
+#   gen_censor_gamma0(
+#     g = g,
+#     b = low_b,
+#     a = low_a,
+#     p_cens = high_p_cens
+#   )
 
 
 # ### true treatment effects ###
-
-library(progress)
-library(beepr)
-library(patchwork)
-
-run_true_survival <- function(n, params, t_end = 5){
-  
-  alpha_0 <- params[[1]]
-  alpha_1 <- params[[2]]
-  alpha_3 <- params[[3]]
-  
-  lambda <- params[[4]]
-  v <- params[[5]]
+# 
+# library(progress)
+# library(beepr)
+# library(patchwork)
+# 
+# run_true_survival <- function(n, params, t_end = 5){
+#   
+#   alpha_0 <- params[[1]]
+#   alpha_1 <- params[[2]]
+#   alpha_3 <- params[[3]]
+#   
+#   lambda <- params[[4]]
+#   v <- params[[5]]
   
   ###### define confounders here #####
-  x <- gen_cur_covs(n)
-  x_1 <- x[[1]]
-  x_3 <- x[[3]]
+  # x <- gen_cur_covs(n)
+  # x_1 <- x[[1]]
+  # x_3 <- x[[3]]
   
-  ###### define l here #####
-  l <- alpha_0 + alpha_1*x_1 + alpha_3*x_3 
-  
-  t <- c()
-  
-  pb <- progress_bar$new(total = n, format = "running sim of size :total... [:bar]   :percent completed; eta: :eta")
-  
-    for(i in 1:n){
-      pb$tick()
-      cur_samp <- runif(n)
-      calculated_samp <- (-log(cur_samp)/(lambda*exp(l)))^(1/v)
-      t <- mean(calculated_samp > t_end)
-    }
-  
-    t_hat <- mean(t)
-    beep()
-  return(t_hat)
-}
-
-m <- 100000
-
-gen_expected_ace <- function(n, params1, params0){
-  t_1_true_val <- run_true_survival(n, params = params1) %>% round(digits = 3)
-  t_0_true_val <- run_true_survival(n, params = params0) %>% round(digits = 3)
-  return(t_1_true_val - t_0_true_val)
-}
-
-high_te <- gen_expected_ace(n = m, list(-1, 2, 3, 0.0001, 3), list(0, 2, 3, 0.0001, 3))
-low_te <- gen_expected_ace(n = m, list(-0.1, 2, 3, 0.0001, 3), list(0, 2, 3, 0.0001, 3))
-high_te
-low_te
+#   ###### define l here #####
+#   l <- alpha_0 + alpha_1*x_1 + alpha_3*x_3 
+#   
+#   t <- c()
+#   
+#   pb <- progress_bar$new(total = n, format = "running sim of size :total... [:bar]   :percent completed; eta: :eta")
+#   
+#     for(i in 1:n){
+#       pb$tick()
+#       cur_samp <- runif(n)
+#       calculated_samp <- (-log(cur_samp)/(lambda*exp(l)))^(1/v)
+#       t <- mean(calculated_samp > t_end)
+#     }
+#   
+#     t_hat <- mean(t)
+#     beep()
+#   return(t_hat)
+# }
+# 
+# m <- 100000
+# 
+# gen_expected_ace <- function(n, params1, params0){
+#   t_1_true_val <- run_true_survival(n, params = params1) %>% round(digits = 3)
+#   t_0_true_val <- run_true_survival(n, params = params0) %>% round(digits = 3)
+#   return(t_1_true_val - t_0_true_val)
+# }
+# 
+# high_te <- gen_expected_ace(n = m, list(-1, 2, 3, 0.0001, 3), list(0, 2, 3, 0.0001, 3))
+# low_te <- gen_expected_ace(n = m, list(-0.1, 2, 3, 0.0001, 3), list(0, 2, 3, 0.0001, 3))
+# high_te
+# low_te
