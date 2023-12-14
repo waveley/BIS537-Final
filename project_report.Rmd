@@ -66,21 +66,23 @@ While the ideal setting to conduct causal inference on survival outcomes are ran
 
 Time-to-event outcomes are of great interest to investigators across a variety of clinical settings, however present analytical difficulties even within the constrains of a randomized controlled trial. In particular, the non-observation of an event yet loss of a subject's data, or censoring, presents another missing data issue that the investigator has need to consider. This issue is compounded in the setting of a non-randomized or observational study, where exchangeability between treatment groups cannot be assumed of the collected data.
 
-In this study, we will investigate two possible methods in which this dual-level missing data issue can be addressed. First, is a two-arm weighting method, in which weights based on the probability of treatment and the probability of censoring are calculated and used together in estimating the causal estimand of interest. The second is a single-arm sequential weighting method, in which weights based on the probability of treatment are used to construct a pseudo-population from which weights based on the probability of censoring indication are derived -- the final compositely-weighted dataset will be used to estimate the causal estimand..
+Potential solutions to this dual-level missing data issue have been explored previously, with the construction of a combined weight using both treatment and censoring propensity scores (Hernan 2000, Chao 2022) 
+
+In this study, we will investigate two possible methods in which this dual-level missing data issue can be addressed. First, is a two-arm weighting method, in which weights based on the probability of treatment and the probability of censoring are calculated and used together in estimating the causal estimand of interest. The second is a single-arm sequential weighting method, in which weights based on the probability of treatment are used to construct a pseudo-population from which weights based on the probability of censoring indication are derived -- the final compositely-weighted dataset will be used to estimate the causal estimand.
 
 ## Causal Survival Estimands
 
-The estimand of interest for this simulation study will be the restricted average survival causal effect, defined as follows (Mao 2018):
+The estimand of interest for this simulation study will be the restricted average survival causal effect at 5 months, defined as follows (Mao 2018):
 
 $$
 \begin{aligned}
-  \Delta_{RACE} &= \frac{E[\omega(e_i)\min(T_{1i}, t^*)]}{E[\omega(e_i)]} - \frac{E[\omega(e_i)\min(T_{0i}, t^*)]}{E[\omega(e_i)]}
+  \Delta_{RACE} &= \frac{E[\omega(e_i)\min(T_{1i}, 5)]}{E[\omega(e_i)]} - \frac{E[\omega(e_i)\min(T_{0i}, 5)]}{E[\omega(e_i)]}
   \\
-  &= \int_0^{t^*} S_1(t)dt - \int_0^{t^*} S_0(t)dt
+  &= \int_0^{5} S_1(t)dt - \int_0^{5} S_0(t)dt
 \end{aligned}
 $$
 
-This estimand is interpreted as the average difference in survival time between the treatment and control groups, if both potential outcomes are observed, under the upper bound time restriction of $t^*$.
+This estimand is interpreted as the average difference in survival probabilities between the treatment and control groups, if both potential outcomes are observed, under the upper bound time restriction of $t^* = 5$.
 
 ## Data Generation Settings
 
@@ -88,7 +90,7 @@ We will be using three covariates in this simulation study: $X_1$, $X_2$, $X_3$.
 
 ### Propensity Score Model
 
-The propensity score model will be defined as the following logistic regression: 
+The propensity score model will be defined using the following logistic regression: 
 
 $$
 \begin{aligned}
@@ -98,7 +100,7 @@ g^{-1}(E[Z = 1 | \mathbf{X}_i]) = \beta_0 + \beta_1 X_{1i} + \beta_2 X_{2i},
 \end{aligned}
 $$
 
-In our simulation, $\beta_1$, $\beta_2$, and $\beta_3$ will be varied to create settings of varying overlap (i.e., weak and strong overlaps), and $\beta_0$ will be varied to specify treatment proportions (i.e., low and high treatment proportions).
+In our simulation, $\beta_1$, $\beta_2$, and $\beta_3$ will be varied to create settings of varying overlap (i.e., weak and strong overlaps), and $\beta_0$ will be determined through simulations to allow for the overall treatment proportion for all settings to be 55%. 
 
 ### Survival Times Model
 
