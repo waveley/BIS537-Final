@@ -7,7 +7,9 @@ output:
   bookdown::pdf_document2:
     toc: false
     number_sections: false
+fontsize: 11pt
 header-includes:
+  - \usepackage{setspace}\doublespacing
   - \usepackage{mathrsfs}
   - \usepackage{amsfonts}  
   - \usepackage{amsmath}
@@ -58,22 +60,34 @@ scale_colour_discrete = scale_colour_viridis_d
 scale_fill_discrete   = scale_fill_viridis_d
 ```
 
-# Background
-
-## Survival Analysis and Causal Inference
+# 1. Introduction
 
 While the ideal setting to conduct causal inference on survival outcomes are randomized experiments, as is true for most areas of research, it is often the case that such an experimental setting is difficult or impossible to achieve. As such, when treatment and control groups are not exchangeable, it may be necessary to implement causal inference methods to address the absence of direct counterfactual proxies.
 
 Time-to-event outcomes are of great interest to investigators across a variety of clinical settings, however present analytical difficulties even within the constrains of a randomized controlled trial. In particular, the non-observation of an event yet loss of a subject's data, or censoring, presents another missing data issue that the investigator has need to consider. This issue is compounded in the setting of a non-randomized or observational study, where exchangeability between treatment groups cannot be assumed of the collected data.
 
-Potential solutions to this dual-level missing data issue have been explored previously, with the construction of a combined weight using both treatment and censoring propensity scores (Hernan 2000, Chao 2022) 
+Several procedures addressing this dual-level missing data issue in the estimation of time-to-event causal effects have been explored previously. Some of these procedures extend the idea of inverse probability weighting to the setting of survival analysis in constructing a combined treatment and censoring weights (Hernan 2000, Cheng 2022) to approximate exchangeability and estimating the causal estimand through a weighted estimator. Other methods approach the problem by obtaining survival outcomes for each subject through a jackknife procedure (Andersen 2017) and estimate the causal estimand based on those pseudo-observed endpoints. The pseudo-observaions approach has been further improved upon with the employment of propensity score weighting to close the distance between the collected sample and the target population (Li 2021) as well as with the recent proposal of a doubly-robust estimation technique (Wang 2023) to allow for some flexibility with regards to model misspecification. 
 
-In this study, we will investigate two possible methods in which this dual-level missing data issue can be addressed. First, is a two-arm weighting method, in which weights based on the probability of treatment and the probability of censoring are calculated and used together in estimating the causal estimand of interest. The second is a single-arm sequential weighting method, in which weights based on the probability of treatment are used to construct a pseudo-population from which weights based on the probability of censoring indication are derived -- the final compositely-weighted dataset will be used to estimate the causal estimand.
+In this study, we are interested in revisiting the weighting methods and are proposing a new procedure in which model misspecification may be implicitly adjusted for. In doing so, we will first employ the two-arm weighting method established by Cheng et.al (2022), in which weights based on the probability of treatment and the probability of censoring are calculated and used together in estimating the causal estimand of interest. We will then compare its performance to the results obtained from a single-arm sequential weighting method that we have developed, where weights are constructed iteratively, and the final compositely-weighted dataset will then be used to estimate the causal estimand.
 
-## Causal Survival Estimands
+The remainder of this report is organized as follows: in section 2, we introduce our causal survival estimand; in section 3, we discuss our simulation design; in section 4, we illustrate our results from simulation study; and section 5 concludes with a discussion.
 
-The estimand of interest for this simulation study will be the restricted average survival causal effect at 5 months, defined as follows (Mao 2018):
+# 2. Methods
 
+## 2.1 Causal Survival Estimand
+
+While there are several causal estimands that could be of interest, we will be focusing our study on the restricted average causal effect (RACE) for ease of interpretation. In Mao et al. 2018, this was defined as follows:
+$$
+\begin{aligned}
+  \Delta_{RACE} &= \frac{E[\omega(e_i)\min(T_{1i}, t^*)]}{E[\omega(e_i)]} - \frac{E[\omega(e_i)\min(T_{0i}, t^*)]}{E[\omega(e_i)]}
+  \\
+  &= \int_0^{t^*} S_1(t)dt - \int_0^{t^*} S_0(t)dt
+\end{aligned}
+$$
+
+This estimand is interpreted as the average difference in survival time between the treatment and control groups, if both potential outcomes are observed, under the upper bound time restriction of $t^*$.
+
+In this study, we are interested in the upper bound time restriction of 5 -- thus, our estimand will take the following form:
 $$
 \begin{aligned}
   \Delta_{RACE} &= \frac{E[\omega(e_i)\min(T_{1i}, 5)]}{E[\omega(e_i)]} - \frac{E[\omega(e_i)\min(T_{0i}, 5)]}{E[\omega(e_i)]}
@@ -82,91 +96,43 @@ $$
 \end{aligned}
 $$
 
-This estimand is interpreted as the average difference in survival probabilities between the treatment and control groups, if both potential outcomes are observed, under the upper bound time restriction of $t^* = 5$.
+## 2.2 Causal Estimators
 
-## Data Generation Settings
-
-We will be using three covariates in this simulation study: $X_1$, $X_2$, $X_3$. These covariates have the following distributions: $X_1 \sim  \text{Bernoulli}(0.6)$, $X_2 \sim  N(0, 1)$, $X_3 \sim \text{Gamma}(1, 1)$. Patterned after the simulation in Mao 2018, we will define our true models as follows:
-
-### Propensity Score Model
-
-The propensity score model will be defined using the following logistic regression: 
-
+In the separate weighting procedure, to incorporate both the inverse probability treatment weights (IPTW) and the inverse probability of censoring weights (IPCW), we employed the usage of the non-parametric weighted Kaplan-Meier estimator defined by Cheng et al. (2022). This estimator is defined as follows:
 $$
 \begin{aligned}
-g^{-1}(E[Z = 1 | \mathbf{X}_i]) = \beta_0 + \beta_1 X_{1i} + \beta_2 X_{2i},
-\\
-\text{where } g(\mathbf{\mathbf{X}_i}) = \frac{\exp(\boldsymbol{\beta}\mathbf{X}_i^T)}{1 + \exp(\boldsymbol{\beta}\mathbf{X}_i^T)} = E[Z = 1 | \mathbf{X}_i] = e(\mathbf{X}_i)
+  \hat{\Delta}(t)&=\hat{S}(1)-\hat{S}(0)
+  \\
+  &=\Bigg(1-\frac{\sum_{i=1}^{n}\omega_{IPTW_i}A_i\delta_iI(U_i\leq t)\omega_{IPCW_i}}{\sum_{i=1}^{n}\omega_{IPTW_i}A_i}\Bigg)-\Bigg(1-\frac{\sum_{i=1}^{n}\omega_{IPTW_i}(1-A_i)\delta_iI(U_i\leq t)\omega_{IPCW_i}}{\sum_{i=1}^{n}\omega_{IPTW_i}(1-A_i)}\Bigg)
+  \end{aligned}
+$$
+
+where $T_i^{S}$ is the event time of interest, $T_i^{C}$ is the censoring time, $U_i=min(T_i^{S}, T_i^{C})$ is the observed time in study, $\delta_i$ is the censoring indicator, $A_i$ is the treatment indicator, $I(U_i\leq t)$ is the indicator for the observed time being less than the upper limit of time $t$, and $\omega_{IPTW_i}$ and $\omega_{IPCW_i}$ are the inverse pIPTW and IPCW respectively. Then, our estimator would be defined as follows, at $t = 5$: 
+$$
+\begin{aligned}
+  \hat{\Delta}(5)&= \Bigg(1-\frac{\sum_{i=1}^{n}\omega_{IPTW_i}A_i\delta_iI(U_i\leq 5)\omega_{IPCW_i}}{\sum_{i=1}^{n}\omega_{IPTW_i}A_i}\Bigg)
+  -\Bigg(1-\frac{\sum_{i=1}^{n}\omega_{IPTW_i}(1-A_i)\delta_iI(U_i\leq 5)\omega_{IPCW_i}}{\sum_{i=1}^{n}\omega_{IPTW_i}(1-A_i)}\Bigg)
+\end{aligned}
+$$ 
+
+The estimators used in the sequentially weighted procedure will similarly be weighted Kaplan-Meier estimators -- however, these will be distinct from the previously defined estimator in that there will be the need to adjust for one set of weights only. The estimator will thus have the following form, both generally and at $t = 5$:
+$$
+\begin{aligned}
+  \hat{\Delta}(t)&=\hat{S}(1)-\hat{S}(0)
+  \\
+  &=\Bigg(1-\frac{\sum_{i=1}^{n}\omega_{IPTW\circ IPCW_i}A_i\delta_iI(U_i\leq t)}{\sum_{i=1}^{n}\omega_{IPTW\circ IPCW_i}A_i}\Bigg)-\Bigg(1-\frac{\sum_{i=1}^{n}\omega_{IPTW\circ IPCW_i}(1-A_i)\delta_iI(U_i\leq t)}{\sum_{i=1}^{n}\omega_{IPTW\circ IPCW_i}(1-A_i)}\Bigg)
+  \\
+  \hat{\Delta}(5)&=\hat{S}(1)-\hat{S}(0)
+  \\
+  &=\Bigg(1-\frac{\sum_{i=1}^{n}\omega_{IPTW\circ IPCW_i}A_i\delta_iI(U_i\leq 5)}{\sum_{i=1}^{n}\omega_{IPTW\circ IPCW_i}A_i}\Bigg)-\Bigg(1-\frac{\sum_{i=1}^{n}\omega_{IPTW\circ IPCW_i}(1-A_i)\delta_iI(U_i\leq 5)}{\sum_{i=1}^{n}\omega_{IPTW\circ IPCW_i}(1-A_i)}\Bigg)
 \end{aligned}
 $$
 
-In our simulation, $\beta_1$, $\beta_2$, and $\beta_3$ will be varied to create settings of varying overlap (i.e., weak and strong overlaps), and $\beta_0$ will be determined through simulations to allow for the overall treatment proportion for all settings to be 55%. 
+where $\omega_{IPTW\circ IPCW_i}$ is the composite treatment and censoring weight and all other notation is the same as defined previously.
 
-### Survival Times Model
+## 3. Data Generation
 
-The outcomes model will be defined as the following Cox-Weibull model: 
-
-$$
-\begin{aligned}
-h(t|\mathbf{X}_i) &= h_0(t) \exp(L_i),
-\\
-\text{where } h_0(t) &= \lambda \nu t^{\nu-1}, \text{ and } L_i = a_0 Z_i + a_1 X_{1i} + a_3 X_{3i}
-\\
-\\
-S(T_i^S = t) &= \exp(-\lambda t^v \exp (L_i))
-\\
- &= 1 - F(t)
-\end{aligned}
-$$
-
-Then, the survival time for subject $i$ is drawn from:
-
-$$
-T_i^S = \Bigg(\frac{-\log(u_i^S)}{\lambda \exp(L_i)}\Bigg)^{1/\nu}, 
-\\
-\text{where } u_i^S \sim \text{Unif}(0, 1)
-$$
-
-### Censoring Model
-
-The censoring model will be defined as the following exponential model:
-
-$$
-\begin{aligned}
-T^{C}_i \sim \text{Exponential}(\lambda \exp(K_i)),
-\\
-\text{where } K_i = \gamma_0 + \gamma_2 X_{2i} + \gamma_3 X_{3i}
-\\
-\\
-P(T_i^C = t) = \exp(-\lambda t \exp (K_i))
-\end{aligned}
-$$
-
-For simplicity, note that $T_i^C$ is independent of $T_i^S$ as well as treatment $Z_i$. This indicates that we are making the assuming that a subject's censoring time is dependent only on baseline covariates and is not influenced by their actual survival time or treatment assigned treatment.
-
-Algorithmically, the censoring time for subject $i$ will be drawn from:
-
-$$
-T^{C}_i=\frac{-\log(u^{C})}{\lambda \exp(K_i)},
-\\
-\text{where } u^{C} \sim \text{Unif}(0, 1)
-$$
-
-For subject $i$, the observed time, $T^{obs}$ is the minimum of $T_i^C$ and $T_i^S$ ($T^{obs} = \min (T_i^C, T_i^S)$), the censoring indicator for subject $i$, given the survival time $T_i$ and censoring time $T^C$ will be assigned as follows:
-
-$$
-\begin{aligned}
-C_i(T_i^S, T_i^C) = \begin{cases}
-1, \quad \text{ where }T_i^S > T_i^C
-\\
-0. \quad \text{ where }T_i^S \le T_i^C
-\end{cases}
-\end{aligned}
-$$
-
-# Data Simulation
-
-## DAG
+We will generate data in accordance with the following relationships, and the causal effect of interest is highlighted in red:
 
 ```{tikz, echo = FALSE, fig.height = 4, fig.asp = 0.2}
 \tikzstyle{block} = [rectangle, draw, text width=6em, text centered, rounded corners, minimum height=4em]
@@ -175,12 +141,12 @@ $$
   \begin{tikzpicture}[auto]
       % Place nodes
       \node [block] (Z) {Treatment};
-      \node [block, above right of = Z, xshift = 2cm, yshift = 1cm] (X1) {$X_1 \sim \text{Bernoulli}(0.6)$};
+      \node [block, above right of = Z, xshift = 2cm, yshift = 1.5cm] (X1) {$X_1 \sim \text{Bernoulli}(0.6)$};
       \node [block, right of = X1, xshift = 2.5cm] (X2) {$X_2 \sim N(0,1)$};
       \node [block, right of = X2, xshift = 2.5cm] (X3) {$X_3 \sim \text{Gamma}(1,1)$};
-      \node [block, below of = X2, yshift = -0.5cm] (T) {Survival Time};
+      \node [block, below of = X2, yshift = -1.25cm] (T) {Survival Time};
       \node [block, right of = T, xshift = 5cm] (C) {Censoring Time};
-      \node [block, below of = T, yshift = -1cm] (OT) {Observed Time};
+      \node [block, below of = T, yshift = -1.25cm] (OT) {Observed Time};
       % Draw edges
       \path [line] (X1) -- (Z);
       \path [line] (X2) -- (Z);
@@ -194,28 +160,26 @@ $$
   \end{tikzpicture}
 ```
 
+Each component will be described in further detail in the following sections. 
 
-## Treatment and Propensity Score
+### 3.1 Covariates 
 
-The propensity score is defined as follows:
+As described in the previous diagram, we will be utilizing three covariates in this simulation study: $X_1$, $X_2$, $X_3$. These covariates have the following distributions: $X_1 \sim  \text{Bernoulli}(0.6)$, $X_2 \sim  N(0, 1)$, $X_3 \sim \text{Gamma}(1, 1)$ and will explicitly be defined to not be time dependent. 
 
+In addition, these three covariates will all affect the critical measures of interest in this study (i.e., treatment, survival time, and censoring time). However, any given measure will only be affected by two of the three covariates and no two measures will be affected by the same combination of covariates.
+
+### 3.2 True Propensity Score Model
+
+The true propensity score model will be defined using the following logistic regression, taking in covariates $X_1$ and $X_2$: 
 $$
 \begin{aligned}
-e( \mathbf{X}_i) &= P(Z = 1 |  \mathbf{X}_i) = E[Z = 1 |  \mathbf{X}_i]
+g^{-1}(E[Z = 1 | \mathbf{X}_i]) = \beta_0 + \beta_1 X_{1i} + \beta_2 X_{2i},
 \\
-\boldsymbol{\beta} \mathbf{X}_i^T &= \text{logit}(E[Z = 1 | \mathbf{X}_i])
-\\
-&\implies E[Z = 1 |\mathbf{X}_i] = \frac{\exp(\boldsymbol{\beta} \mathbf{X}_i^T)}{1 + \exp(\boldsymbol{\beta} \mathbf{X}_i^T)}
-\\
-E\Big[P(Z = 1)\Big] &= E_X\Big[E_Z\Big(Z = 1 | \mathbf{X}_i\Big)\Big]
-\\
-&= E_X\Bigg[\frac{\exp(\boldsymbol{\beta} \mathbf{X}_i^T)}{1 + \exp(\boldsymbol{\beta} \mathbf{X}_i^T)}\Bigg] = p
+\text{where } g(\mathbf{\mathbf{X}_i}) = \frac{\exp(\boldsymbol{\beta}\mathbf{X}_i^T)}{1 + \exp(\boldsymbol{\beta}\mathbf{X}_i^T)} = E[Z = 1 | \mathbf{X}_i] = e(\mathbf{X}_i)
 \end{aligned}
 $$
 
-As described previously, the covariates $X_1$ and $X_2$ in this model will be drawn from  $\text{Bernoulli}(0.6)$ and $N(0,1)$ distributions, respectively. Then, we see that we will need to select three $\beta$ coefficients to satisfy the form $g^{-1}(E[Z = 1 | X]) = \beta_0 + \beta_1 X_1 + \beta_2 X_2$, where $g(\mathbf{X}) = \frac{\exp(\boldsymbol{\beta X}^T)}{1 + \exp(\boldsymbol{\beta X}^T)} = E[Z = 1 | X]$. 
-
-For weak overlap, let $\beta_1 = \beta_2 = \beta_3 = 3$. For moderate overlap,  $\beta_1 = \beta_2 = \beta_3 = 1$. For strong overlap,  $\beta_1 = \beta_2 = \beta_3 = 0.1$. 
+In our simulation, $\beta_1, \beta_2$ will be held fixed at $\beta_1 = \beta_2 = 0.1$ for the setting of high overlap of overlap, $\beta_1 = \beta_2 = 1$ for the setting of medium overlap, and $\beta_1 = \beta_2  = 3$ for the setting of low overlap. For each of these settings, the $\beta_0$ that would produce an expected treatment proportion of 55% will be obtained through a numerical search over an interval.
 
 ```{r}
 source(file = "misc_functions.R")
@@ -238,7 +202,7 @@ cov_prop_low_overlap <-
   gen_prop_scores(b = list(-1.43, 3, 3, 3), covs = covs_df) 
 ```
 
-The following plots show the overlap of these three simulations:
+The distribution of propensity scores according to each of these settings can be visualized with the following plots, demonstrating that the levels of overlap between treatment groups have indeed been achieved:
 
 ```{r, eval=TRUE, fig.width = 8, fig.height = 2}
 high_overlap_gg <- cov_prop_high_overlap %>% 
@@ -276,52 +240,38 @@ patched_ggs <- high_overlap_gg + med_overlap_gg + low_overlap_gg
 patched_ggs + plot_layout(guides = "collect")
 ```
 
-## Outcomes
+### 3.3 True Survival Time Model
 
-The following generates the outcomes, drawn from a Cox-Weibull model.
+The true survival time model will be defined using the following Cox-Weibull mode, taking in covariates $X_1$ and $X_3$: 
+$$
+\begin{aligned}
+h(t|\mathbf{X}_i) &= h_0(t) \exp(L_i),
+\\
+\text{where } h_0(t) &= \lambda \nu t^{\nu-1}, \text{ and } L_i = a_0 Z_i + a_1 X_{1i} + a_3 X_{3i}
+\\
+S(T_i^S = t) &= \exp(-\lambda t^v \exp (L_i))
+\\
+ &= 1 - F(t)
+\end{aligned}
+$$
 
-```{r}
-source(file = "outcome_functions.R")
-```
+The survival time for subject $i$ will then be drawn from:
+$$
+\begin{aligned}
+T_i^S = \Bigg(\frac{-\log(u_i^S)}{\lambda \exp(L_i)}\Bigg)^{1/\nu}, 
+\\
+\text{where } u_i^S \sim \text{Unif}(0, 1)
+\end{aligned}
+$$
 
-```{r}
-a0 <- 1
-a1 <- 2
-a3 <- 3
-nu <- 3
-lambda <- 0.0001
+From this model, the treatment effect will be determined by $\alpha_0$. Two settings of $\alpha_0$ were selected to correspond with a low and high treatment effect respectively. 
 
-### test outcomes ###
-out_test_po_1 <- 
-  gen_outcomes(cov_prop_high_overlap, lambda = lambda, nu = nu)
-
-out_test_po_1 %>% 
-  ggplot(
-  aes(x = surv_time, fill = as.factor(trt))
-) +
-  geom_density(alpha=0.3) +
-  labs(
-    x = "Time",
-    y = "Density",
-    title = "Density of Time by Treatment\nHigh Overlap Set",
-    fill = "Treatment"
-  )
-```
-
-## Censoring
-
-
-
-## True Estimand
-
-As we have previously established, $T(0)\Big|(X_1, X_3)$ and $T(1)\Big|(X_1, X_3)$ are drawn from the following models:
-
+To obtain the true treatment effects from each of these settings, we started with the conditional distributions of survival time that would be obtained from the defined Cox-Weibull model:
 $$
 \begin{aligned}
 T(1)\Big|(X_1, X_3) &\sim h_{Z = 1}(t|X_1, X_3) = \lambda v t^{v-1}\exp(\alpha_0 + \alpha_1 X_1 + \alpha_3 X_3)
 \\
 &= \lambda^*\nu t^{\nu - 1}, \text{ where } \lambda^* = \lambda  \exp(\alpha_0 + \alpha_1 X_1 + \alpha_3 X_3)
-\\
 \\
 T(0)\Big|(X_1, X_3) &\sim h_{Z = 0}(t|X_1, X_3) = \lambda v t^{v-1}\exp(\alpha_1 X_1 + \alpha_3 X_3)
 \\
@@ -330,7 +280,6 @@ T(0)\Big|(X_1, X_3) &\sim h_{Z = 0}(t|X_1, X_3) = \lambda v t^{v-1}\exp(\alpha_1
 $$
 
 Our target estimand is the average causal effect, or $E[T(1) - T(0)]$, which is unconditional on $(X_1, X_3)$. By the law of total expectations and iterated expectations, we see the following:
-
 $$
 \begin{aligned}
 E[T_i] &= E\Bigg[E\Big[T_i | X_1, X_3)\Big]\Bigg]
@@ -341,8 +290,7 @@ E[T_i] &= E\Bigg[E\Big[T_i | X_1, X_3)\Big]\Bigg]
 \end{aligned}
 $$
 
-Let $X_{11}, ..., X_{1m} \sim P(X_1)$ and $X_{31}, ..., X_{3m} \sim P(X_3)$. Then, for $m$ sufficiently large, we note: 
-
+Let $X_{11}, ..., X_{1m} \sim P(X_1)$ and $X_{31}, ..., X_{3m} \sim P(X_3)$. Then, for a sufficiently large $m$, we note: 
 $$
 \begin{aligned}
 E[T_i] &= \int _{X_1, X_3} E\Big[T_i | X_1= x_1, X_3 = x_3]P(X_1 = x_1) P(X_3 = x_3)d\mu (x_1, x_3) 
@@ -351,55 +299,159 @@ E[T_i] &= \int _{X_1, X_3} E\Big[T_i | X_1= x_1, X_3 = x_3]P(X_1 = x_1) P(X_3 = 
 \end{aligned}
 $$
 
-To obtain the true value estimates of $E[T(1)]$ and $E[T(0)]$, we will draw 1000000 samples each from the distributions of $X_1$ and $X_3$ to simulate the distributional behavior of each of these random variables, and sum the computed conditional expectations of $T(1)|(X_{1j}, X_{3j})$ and $T(0)|(X_{1k}, X_{3k})$ for each sample $j$ and $k$, where $j = k = 1000000$.
+The true value estimates of $E[T(1)]$ and $E[T(0)]$ will be calculated by taking two samples of size $m = 1000000$ from the distributions of $X_1$ and $X_3$ to simulate the distributional behavior of each of these random variables, and sum the computed conditional expectations of $T(1)|(X_{1j}, X_{3j})$ and $T(0)|(X_{1k}, X_{3k})$ for each sample $j$ and $k$, where $j = k = m$. 
 
-```{r, message = TRUE, eval=FALSE}
-library(progress)
-library(beepr)
-library(patchwork)
+The true RACE values that we computed from this procedure were $0.127$ for the "high" treatment effect setting and $0.014$ for the "low" treatment effect setting.
 
-run_true_expected_time <- function(n, params){
+The distribution of survival time according to each of these settings and by levels of covariate overlap between treatment groups can be visualized with the following plots:
 
-  alpha_0 <- params[[1]]
-  alpha_1 <- params[[2]]
-  alpha_2 <- params[[3]]
-  alpha_3 <- params[[4]]
-  
-  lambda <- params[[5]]
-  v <- params[[6]]
-  
-  ###### define confounders here #####
-  x_1 <- rbernoulli(n, 0.6)
-  x_2 <- rnorm(n)
-  x_3 <- rnorm(n, 0, 0.5)
-
-  ###### define l here #####
-  l <- alpha_0 + alpha_1*x_1 + alpha_3*x_3 
-  
-  t <- c()
-  
-  pb <- progress_bar$new(total = n, format = "running sim of size :total... [:bar]   :percent completed; eta: :eta")
-  
-#  for(i in 1:n){
-#    pb$tick()
-    cur_samp <- runif(n)
-    calculated_samp <- (-log(cur_samp)/(lambda*exp(l)))^(1/v)
-    t <- mean(calculated_samp)
-#  }
-  
-#  t_hat <- mean(t)
-#  beep()
-  return(t)
-}
-
-m <- 1000000
-t_1_true_val <- run_true_expected_time(n = m, params = list(-1, 2, 1.5, 3, 0.0001, 3)) %>% round(digits = 3)
-t_0_true_val <- run_true_expected_time(n = m, params = list(0, 2, 1.5, 3, 0.0001, 3)) %>% round(digits = 3)
-t_1_true_val - t_0_true_val
+```{r}
+source(file = "outcome_functions.R")
 ```
 
+```{r, fig.width = 8, fig.height = 2, fig.asp = 0.4}
+a0 <- -1
+a1 <- 2
+a3 <- 3
+nu <- 3
+lambda <- 0.0001
+
+### test outcomes ###
+out_test_po_1 <- 
+  gen_outcomes(cov_prop_high_overlap, lambda = lambda, nu = nu)
+
+out_gg_1 <- out_test_po_1 %>% 
+  ggplot(
+  aes(x = surv_time, fill = as.factor(trt))
+) +
+  geom_density(alpha=0.3) +
+  labs(
+    x = "Time",
+    y = "Density",
+    title = "High Overlap",
+    fill = "Treatment"
+  )
+
+out_test_po_2 <- 
+  gen_outcomes(cov_prop_moderate_overlap, lambda = lambda, nu = nu)
+
+out_gg_2 <- out_test_po_2 %>% 
+  ggplot(
+  aes(x = surv_time, fill = as.factor(trt))
+) +
+  geom_density(alpha=0.3) +
+  labs(
+    x = "Time",
+    y = "Density",
+    title = "Moderate Overlap",
+    fill = "Treatment"
+  )
+
+out_test_po_3 <- 
+  gen_outcomes(cov_prop_low_overlap, lambda = lambda, nu = nu)
+
+out_gg_3 <- out_test_po_3 %>% 
+  ggplot(
+  aes(x = surv_time, fill = as.factor(trt))
+) +
+  geom_density(alpha=0.3) +
+  labs(
+    x = "Time",
+    y = "Density",
+    title = "Low Overlap",
+    fill = "Treatment"
+  )
+
+a0 <- -0.01
+a1 <- 2
+a3 <- 3
+nu <- 3
+lambda <- 0.0001
+
+### test outcomes ###
+out_test_po_4 <- 
+  gen_outcomes(cov_prop_high_overlap, lambda = lambda, nu = nu)
+
+out_gg_4 <- out_test_po_4 %>% 
+  ggplot(
+  aes(x = surv_time, fill = as.factor(trt))
+) +
+  geom_density(alpha=0.3) +
+  labs(
+    x = "Time",
+    y = "Density",
+    title = "High Overlap",
+    fill = "Treatment"
+  )
+
+out_test_po_5 <- 
+  gen_outcomes(cov_prop_moderate_overlap, lambda = lambda, nu = nu)
+
+out_gg_5 <- out_test_po_5 %>% 
+  ggplot(
+  aes(x = surv_time, fill = as.factor(trt))
+) +
+  geom_density(alpha=0.3) +
+  labs(
+    x = "Time",
+    y = "Density",
+    title = "Moderate Overlap",
+    fill = "Treatment"
+  )
+out_test_po_6 <- 
+  gen_outcomes(cov_prop_low_overlap, lambda = lambda, nu = nu)
+
+out_gg_6 <- out_test_po_6 %>% 
+  ggplot(
+  aes(x = surv_time, fill = as.factor(trt))
+) +
+  geom_density(alpha=0.3) +
+  labs(
+    x = "Time",
+    y = "Density",
+    title = "Low Overlap",
+    fill = "Treatment"
+  )
+
+top_out_ggs <- (out_gg_1 + out_gg_2 + out_gg_3) 
+bottom_out_ggs <- (out_gg_4 + out_gg_5 + out_gg_6)
+
+top_out_ggs + plot_layout(guides = "collect") + plot_annotation(title = "Density of Survival Time by Treatment\nHigh Treatment Effect")
+
+bottom_out_ggs + plot_layout(guides = "collect") + plot_annotation(title = "Density of Survival Time by Treatment\nLow Treatment Effect")
+```
+
+### 3.4 True Censoring Model
+
+The censoring model will be defined using the following exponential model, taking in covariates $X_2$ and $X_3$, and independent of $T_i^C$, $T_i^S$, and $Z_i$:
+$$
+\begin{aligned}
+T^{C}_i \sim \text{Exponential}(\lambda \exp(K_i)),
+\\
+\text{where } K_i = \gamma_0 + \gamma_2 X_{2i} + \gamma_3 X_{3i}
+\end{aligned}
+$$
 
 
+Algorithmically, the censoring time for subject $i$ will be drawn from:
+$$
+\begin{aligned}
+T^{C}_i=\frac{-\log(u^{C})}{\lambda \exp(K_i)},
+\\
+\text{where } u^{C} \sim \text{Unif}(0, 1)
+\end{aligned}
+$$
+
+For subject $i$, the observed time, $T^{obs}$ is the minimum of $T_i^C$ and $T_i^S$, or $T^{obs} = \min (T_i^C, T_i^S)$. In addition, the censoring indicator for subject $i$, given the survival time $T_i$ and censoring time $T^C$ will be assigned as follows:
+$$
+\begin{aligned}
+C_i(T_i^S, T_i^C) = \begin{cases}
+1, \quad \text{ where }T_i^S > T_i^C
+\\
+0. \quad \text{ where }T_i^S \le T_i^C
+\end{cases}
+\end{aligned}
+$$
 
 
 
