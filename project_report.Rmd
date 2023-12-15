@@ -27,6 +27,7 @@ library(bookdown)
 library(latex2exp)
 library(progress)
 library(patchwork)
+library(kableExtra)
 
 # set knitr defaults
 knitr::opts_chunk$set(
@@ -148,7 +149,11 @@ w_{IPRW_i} &= \begin{cases}
 \end{aligned}
 $$
 
+In the estimated propensity score models, all available baseline covariates (which does exclude treatment assignment and censoring indication) were included as model predictors, irrespective of how the true propensity score model was generated. Though this by default produces a misspecified model, our intent was to replicate and examine situations that may occur in practice, where the data generation procedure is unknown and it may seem reasonable to the investigator to include all collected baseline characteristics. We will explore the impact of this decision in the Discussion section of this paper.  
+
 ### 2.3.1 Separate Weighting
+
+The first weighting procedure is to estimate IPTW and IPCW separately. Then the two weights are used together in the estimator described in the previous section to estimate our target estimand (see the diagram below).
 
 ```{tikz, echo = FALSE}
 \tikzstyle{block} = [rectangle, draw, text width=6em, text centered, rounded corners, minimum height=4em]
@@ -173,11 +178,13 @@ $$
   \end{tikzpicture}
 ```
 
+We estimated IPTW using logistic regression with covariates $X_1$, $X_2$, and $X_3$. In separate weighting procedure, we used both logistic regression and Cox-Exponential regression with covariates $X_1$, $X_2$, and $X_3$ to estimate IPCW. All simulations and analyses were conducted in R. The logistic regressions were fitted using `glm` function and Cox-exponential model using `ipcw` from `riskRegression` R package.
+
 ### 2.3.2 Sequential Weighting
 
 In this second weighting procedure, weights are first constructed based on either treatment assignment or censoring indication propensity scores. After this, the weighted dataset would be used to generate weights based on the indication that was not used in the first step of weighting. The causal estimand would be estimated using the second set of weights applied to to the weighted dataset from the first step of weighting.
 
-We have considered the utility of both indicator variables (treatment assignment and censoring indication) as weighting starting points because, under the assumption that censoring time and treatment assignment are independent of each other in this study, the relationship between censoring indication and treatment assignment is one in which temporality is difficult to evaluate. 
+The weighting processes were conducted as depicted in the following diagram, where circles indicate where weighting occurred and boxes marked with asterisks indicate pseudo-populations:
 
 ```{tikz, echo = FALSE}
 \tikzstyle{block} = [rectangle, draw, text width=6em, text centered, rounded corners, minimum height=4em]
@@ -219,6 +226,11 @@ We have considered the utility of both indicator variables (treatment assignment
   \end{tikzpicture}
 ```
 
+We have considered the utility of both indicator variables (treatment assignment and censoring indication) as weighting starting points because the relationship between censoring indication and treatment assignment causes it to be difficult to favor one sequential weighting pathway over the other. Some may prefer the sequential weighting procedure that calculates treatment weights first, on the basis of observational temporality -- however, while it is true that treatment assignment is observed by the researcher prior to censoring time, if the subject indeed is censored, it seems that the timeline of the conduct of the actual study may not necessarily be the best guideline in determining the order of how weights are calculated, especially if it is assumed that censoring time and treatment assignment are independent of each other, as is commonly assumed and has been maintained in this study. In such a case, when censoring time is a quantity that is generated without respect to treatment assignment, the censoring indicator variable would be related to treatment assignment indirectly, through the effect that the assigned treatment would have on survival time; this is a rather complex relationship to evaluate 
+
+Thus, in this study, we have considered and presented results for both options of sequential weighting, allowing room for investigators interested in this method of inverse probability weighting adjustment to select the method most suitable for the parameters of their studies. 
+
+In the implementation of both procedures, the treatment weights were obtained through a logistic regression in `R`, using the `glm` function in base `R` with a logit link function, and the censoring weights were obtained through two Cox-Exponential regressions, which were separated by treatment group, through the `ipcw` function in the `riskRegression` package. In the establishment of the IPTW $\circ$ IPCW procedure, the censoring weights were directly identified in the `glm` function call. In the establishment of the IPCW $\circ$ IPTW procedure, as the `ipcw` function does not take in weights, the treatment-weighted dataset was expanded, using the `expandRows` function from the `splitstackshape` package, according to the calculated treatment weights in order to obtain the second set of weights for censoring indication. 
 
 # 3. Data Generation
 
@@ -254,7 +266,7 @@ Each component will be described in further detail in the following sections.
 
 ## 3.1 Covariates 
 
-As described in the previous diagram, we will be utilizing three covariates in this simulation study: $X_1$, $X_2$, $X_3$. These covariates have the following distributions: $X_1 \sim  \text{Bernoulli}(0.6)$, $X_2 \sim  N(0, 1)$, $X_3 \sim \text{Gamma}(1, 1)$ and will explicitly be defined to not be time dependent. 
+As described in the previous diagram, we will be utilizing three covariates in this simulation study: $X_1$, $X_2$, $X_3$. These covariates have the following distributions: $X_1 \sim  \text{Bernoulli}(0.6)$, $X_2 \sim  N(0, 1)$, $X_3 \sim \text{Gamma}(1, 1)$ and will explicitly be defined to not be time dependent. These distributions were selected to represent different kinds of covariates that may appear in a real-world study and also to a variety of distributional behaviors.
 
 In addition, these three covariates will all affect the critical measures of interest in this study (i.e., treatment, survival time, and censoring time). However, any given measure will only be affected by two of the three covariates and no two measures will be affected by the same combination of covariates.
 
@@ -550,65 +562,23 @@ In a similar fashion to how the model intercept was selected in the true propens
 
 ## 4.1 Separate Weighting
 
-We estimated IPTW using logistic regression with covariates $X_1$, $X_2$, and $X_3$. In separate weighting procedure, we used both logistic regression and Exponential-Cox model with covariates $X_1$, $X_2$, and $X_3$ to estimate IPCW. All simulations and analyses were conducted in R. The logistic regressions were fitted using $glm()$ function and Cox model using $ipcw()$ from $RiskRegression$ R package.
-
 We summarized the mean of estimated causal estimand, relative bias and $95\%$ coverage rate from the simulation for separate weighting procedure in Table 1. When using logistic regression to estimate both IPTW and IPCW, we observed smaller relative bias and higher $95\%$ coverage rate among low censoring scenarios regardless of overlap and treatment effect settings. The high overlap scenarios were also observed associated with higher $95\%$ coverage rate. However, such a pattern was not obvious when using Cox model to estimate IPCW. We also checked covariate balancing by computing absolute standardized difference (ASD) and reported the results in table 2. Contrary to table 1, the performance of the method using logistic regression for IPTW and Cox model for IPCW was better than the model of dual logistic regression in terms of balancing baseline covariates.
-
-```{r}
-library(kableExtra)
-load("table1.RData")
-table1_to_kable <-
-  table1 %>% 
-  as_tibble() %>%
-  janitor::clean_names() %>%
-  mutate(
-    all_v1 = round(as.numeric(all_v1), 4),
-    scenario =
-      case_when(
-        true_ace == 0.014 & scenario == "High/High/High" ~ "High/Low/High",
-        true_ace == 0.014 & scenario == "Med/High/High" ~ "Med/Low/High",
-        true_ace == 0.014 & scenario == "Low/High/High" ~ "Low/Low/High",
-        TRUE ~ scenario
-      )
-  ) 
-
-table1_to_kable %>%
-  group_by(scenario, true_ace) %>%
-  pivot_wider(
-    names_from = c(v1, measure),
-    values_from = all_v1
-  ) %>%
-  janitor::clean_names() %>%
-  knitr::kable(
-    col.names = c("Scenario$^\\text{a}$",
-                  "True ACE",
-                  "Avg. Estimate",
-                  "Relative Bias",
-                  "95\\% Coverage Rate",
-                  "Avg. Estimate",
-                  "Relative Bias",
-                  "95\\% Coverage Rate"
-                  ),
-      booktabs=TRUE,
-    escape=FALSE,
-    caption = "Separate Weighting Estimation Results"
-  )%>%
-  kable_styling(latex_options = c("HOLD_position", "scale_down")) %>% 
-  add_header_above(c(" " = 2, "Dual Logistic" = 3, "Logistic/Cox"=3), escape = FALSE) %>%
-  add_footnote(c("Note: scenarios are described by (degree of overlap/treatment effect level/censoring level)"))
-```
 
 ```{r}
 load("table2.RData")
 table2_to_kable <-
   table2 %>% 
   as_tibble() %>%
-  janitor::clean_names() %>%
-  mutate(
-    asd_all = round(as.numeric(asd_all), 4)
-  ) 
+  janitor::clean_names()
+
+table2_to_kable$scenario_asd[100:108] <- "Low/Low/High"
+table2_to_kable$scenario_asd[91:99] <- "Med/Low/High"
+table2_to_kable$scenario_asd[82:90] <- "High/Low/High"
 
 table2_to_kable %>%
+  mutate(
+    asd_all = round(as.numeric(asd_all), 4)
+  ) %>%
   group_by(scenario_asd) %>%
   pivot_wider(
     names_from = names,
@@ -637,51 +607,129 @@ table2_to_kable %>%
   add_footnote(c("Note: scenarios are described by (degree of overlap/treatment effect level/censoring level)"))
 ```
 
-## 4.2 Sequential Weighting
+```{r, fig.height = 1, fig.width = 8}
+to_asd_gg <- table2_to_kable %>%
+  group_by(scenario_asd) %>%
+  pivot_wider(
+    names_from = names,
+    values_from = asd_all
+  ) %>%
+  janitor::clean_names() %>%
+  unnest(x1_asd_raw:x3_asd_wt2) %>%
+  pivot_longer(
+    cols = x1_asd_raw:x3_asd_wt2
+  ) %>%
+  separate(
+    name, into=c("var", "weight"),
+    sep = "_asd_",
+    extra="merge"
+  )  %>%
+  mutate(
+    weight = case_when(
+      weight == "raw" ~ "Unweighted",
+      weight == "wt1" ~ "Dual Logistic",
+      weight == "wt2" ~ "Logistic/Cox"
+    ),
+    scenario = scenario_asd,
+    value = as.numeric(value)
+  ) 
+
+asd_gg_1 <- 
+  to_asd_gg %>%
+  filter(var=="x1") %>%
+  ggplot(
+    aes(x = scenario, 
+    y = value,
+    col = weight,
+    group = weight)
+  ) +
+  labs(x = "Scenario", y = "ASD", col = "Weighting Procedure",
+       title = "X1") +
+  geom_point() + 
+  geom_line() + 
+  coord_flip()
+
+asd_gg_2 <- 
+  to_asd_gg%>%
+  filter(var=="x2") %>%
+  ggplot(
+    aes(x = scenario, 
+    y = value,
+    col = weight,
+    group = weight)
+  ) +
+  labs(x = "Scenario", y = "ASD", col = "Weighting Procedure",
+       title = "X2") +
+  geom_point() + 
+  geom_line() + 
+  coord_flip()
+
+asd_gg_3 <- 
+  to_asd_gg %>%
+  filter(var=="x3") %>%
+  ggplot(
+    aes(x = scenario, 
+    y = value,
+    col = weight,
+    group = weight)
+  ) +
+  labs(x = "Scenario", y = "ASD", col = "Weighting Procedure",
+       title = "X3") +
+  geom_point() + 
+  geom_line() + 
+  coord_flip()
+  
+(asd_gg_1 + asd_gg_2 + asd_gg_3) + plot_layout(guides = "collect") + plot_annotation(title = "ASD by Scenario and Weighting Procedure\nSeparate Weighting Procedures")
+```
+
 
 
 ```{r}
-seq_weights_res <- read_csv(file = "fin_res_sum.csv") %>%
-  select(-scenario) %>%
-  bind_cols(table1_to_kable %>% select(scenario, true_ace) %>% unique()) %>%
-  relocate(
-    scenario, true_ace
-  )
-
-seq_weights_res %>% 
-  select(
-    scenario, true_ace, 
-    avg_te_trt_cens_adj_km,
-    relative_bias_trt_cens_adj_km,
-    coverage_prop_trt_cens_adj_km,
-    avg_te_cens_trt_adj_km,
-    relative_bias_cens_trt_adj_km,
-    coverage_prop_cens_trt_adj_km
-  ) %>%
+load("table1.RData")
+table1_to_kable <-
+  table1 %>% 
+  as_tibble() %>%
+  janitor::clean_names() %>%
   mutate(
-    avg_te_trt_cens_adj_km = round(avg_te_trt_cens_adj_km, 4),
-    relative_bias_trt_cens_adj_km = round(relative_bias_trt_cens_adj_km, 4),
-    avg_te_cens_trt_adj_km = round(avg_te_cens_trt_adj_km, 4),
-    relative_bias_cens_trt_adj_km = round(relative_bias_cens_trt_adj_km, 4)
+    all_v1 = round(as.numeric(all_v1), 4),
+    scenario =
+      case_when(
+        true_ace == 0.014 & scenario == "High/High/High" ~ "High/Low/High",
+        true_ace == 0.014 & scenario == "Med/High/High" ~ "Med/Low/High",
+        true_ace == 0.014 & scenario == "Low/High/High" ~ "Low/Low/High",
+        TRUE ~ scenario
+      )
+  ) 
+table1_to_kable %>%
+  group_by(scenario, true_ace) %>%
+  pivot_wider(
+    names_from = c(v1, measure),
+    values_from = all_v1
   ) %>%
+  janitor::clean_names() %>%
   knitr::kable(
-    col.names = c(
-      "Scenario$^\\text{a}$", "True ACE",
-      "Avg. Estimate",
-      "Relative Bias",
-      "95\\% Coverage Rate",
-      "Avg. Estimate",
-      "Relative Bias",
-      "95\\% Coverage Rate"),
-    booktabs=TRUE,
+    col.names = c("Scenario$^\\text{a}$",
+                  "True ACE",
+                  "Avg. Estimate",
+                  "Relative Bias",
+                  "95\\% Coverage Rate",
+                  "Avg. Estimate",
+                  "Relative Bias",
+                  "95\\% Coverage Rate"
+                  ),
+      booktabs=TRUE,
     escape=FALSE,
-    caption = "Sequential Weighting Estimation Results"
+    caption = "Separate Weighting Estimation Results"
   )%>%
   kable_styling(latex_options = c("HOLD_position", "scale_down")) %>% 
-  add_header_above(c(" " = 2, "IPTW*IPCW" = 3, "IPCW*IPTW"= 3), escape = FALSE) %>%
+  add_header_above(c(" " = 2, "Dual Logistic" = 3, "Logistic/Cox"=3), escape = FALSE) %>%
   add_footnote(c("Note: scenarios are described by (degree of overlap/treatment effect level/censoring level)"))
 ```
 
+
+## 4.2 Sequential Weighting
+
+The following table provides results corresponding to how the sequential weighting procedures performed in balancing covariates between the two treatment groups:
 
 ```{r}
 seq_weights_asd <- read_csv(file = "fin_asd_sum.csv") %>%
@@ -717,27 +765,138 @@ seq_weights_asd %>%
   ) %>%
   knitr::kable(
     col.names = linebreak(c(
-      "Scenario$^\\text{a}$", 
+      "Scenario$^\\text{b}$", 
       "Unweighted",
-      "IPTW*IPCW",
-      "IPCW*IPTW",
+      "IPTW$\\circ$IPCW",
+      "IPCW$\\circ$IPTW",
       "Unweighted",
-      "IPTW*IPCW",
-      "IPCW*IPTW",
+      "IPTW$\\circ$IPCW",
+      "IPCW$\\circ$IPTW",
       "Unweighted",
-      "IPTW*IPCW",
-      "IPCW*IPTW"),
+      "IPTW$\\circ$IPCW",
+      "IPCW$\\circ$IPTW"),
     align="r"),
     booktabs=TRUE,
     escape=FALSE,
-    caption = "Sequential Weighting Covariate Balance Results (ASD)"
+    caption = "Sequential Weighting Covariate Balance Results (ASD)$^\\text{a}$"
   )%>%
   kable_styling(latex_options = c("HOLD_position", "scale_down")) %>% 
   add_header_above(c(" " = 1, "X1" = 3, "X2"= 3, "X3" = 3), escape = FALSE) %>%
-  add_footnote(c("Note: scenarios are described by (degree of overlap/treatment effect level/censoring level)"))
+  add_footnote(c("Averaged over 1000 total bootstrapped replicates (100 bootstrap replicates over each of 100 samples)", "Scenarios are described by (degree of overlap/treatment effect level/censoring level)"))
 ```
 
+```{r, fig.height = 1, fig.width = 8}
+to_asd_gg <- seq_weights_asd %>%
+  pivot_longer(
+    cols = x1_none:x3_ipcw_iptw
+  ) %>%
+  separate(
+    name, into=c("var", "weight"),
+    sep = "_",
+    extra="merge"
+  )  %>%
+  mutate(
+    weight = case_when(
+      weight == "iptw" ~ "IPTW",
+      weight == "ipcw" ~ "IPCW",
+      weight == "iptw_ipcw" ~ "IPTW*IPCW",
+      weight == "ipcw_iptw" ~ "IPCW*IPTW",
+      weight == "none" ~ "Unweighted"
+    )
+  ) %>%
+  filter(weight %in% c("IPTW*IPCW", "IPCW*IPTW", "Unweighted"))
 
+asd_gg_1 <- 
+  to_asd_gg%>%
+  filter(var=="x1") %>%
+  ggplot(
+    aes(x = scenario, 
+    y = value,
+    col = weight,
+    group = weight)
+  ) +
+  labs(x = "Scenario", y = "ASD", col = "Weighting Procedure",
+       title = "X1") +
+  geom_point() + 
+  geom_line() + 
+  coord_flip()
+
+asd_gg_2 <- 
+  to_asd_gg%>%
+  filter(var=="x2") %>%
+  ggplot(
+    aes(x = scenario, 
+    y = value,
+    col = weight,
+    group = weight)
+  ) +
+  labs(x = "Scenario", y = "ASD", col = "Weighting Procedure",
+       title = "X2") +
+  geom_point() + 
+  geom_line() + 
+  coord_flip()
+
+asd_gg_3 <- 
+  to_asd_gg%>%
+  filter(var=="x3") %>%
+  ggplot(
+    aes(x = scenario, 
+    y = value,
+    col = weight,
+    group = weight)
+  ) +
+  labs(x = "Scenario", y = "ASD", col = "Weighting Procedure",
+       title = "X3") +
+  geom_point() + 
+  geom_line() + 
+  coord_flip()
+  
+(asd_gg_1 + asd_gg_2 + asd_gg_3) + plot_layout(guides = "collect") + plot_annotation(title = "ASD by Scenario and Weighting Procedure\nSequentials Weighting Procedures")
+```
+
+It is apparent that there is improvement across most simulation settings in covariate balance in the IPTW$\circ$IPCW weighting method over the unweighted observed data in covariates $X_1$ and $X_2$. This is not the case for the IPCW$\circ$IPTW weighting method, however, as some ASD measures are even larger than what is observable in the 
+
+```{r}
+seq_weights_res <- read_csv(file = "fin_res_sum.csv") %>%
+  select(-scenario) %>%
+  bind_cols(table1_to_kable %>% select(scenario, true_ace) %>% unique()) %>%
+  relocate(
+    scenario, true_ace
+  )
+
+seq_weights_res %>% 
+  select(
+    scenario, true_ace, 
+    avg_te_trt_cens_adj_km,
+    relative_bias_trt_cens_adj_km,
+    coverage_prop_trt_cens_adj_km,
+    avg_te_cens_trt_adj_km,
+    relative_bias_cens_trt_adj_km,
+    coverage_prop_cens_trt_adj_km
+  ) %>%
+  mutate(
+    avg_te_trt_cens_adj_km = round(avg_te_trt_cens_adj_km, 4),
+    relative_bias_trt_cens_adj_km = round(relative_bias_trt_cens_adj_km, 4),
+    avg_te_cens_trt_adj_km = round(avg_te_cens_trt_adj_km, 4),
+    relative_bias_cens_trt_adj_km = round(relative_bias_cens_trt_adj_km, 4)
+  ) %>%
+  knitr::kable(
+    col.names = c(
+      "Scenario$^\\text{b}$", "True ACE",
+      "Avg. Estimate",
+      "Relative Bias",
+      "95\\% Coverage Rate",
+      "Avg. Estimate",
+      "Relative Bias",
+      "95\\% Coverage Rate"),
+    booktabs=TRUE,
+    escape=FALSE,
+    caption = "Sequential Weighting Estimation Results$^\\text{a}$"
+  )%>%
+  kable_styling(latex_options = c("HOLD_position", "scale_down")) %>% 
+  add_header_above(c(" " = 2, "IPTW$\\circ$IPCW" = 3, "IPCW$\\circ$IPTW"= 3), escape = FALSE) %>%
+  add_footnote(c("Averaged over 1000 total bootstrapped replicates (100 bootstrap replicates over each of 100 samples)", "Note: scenarios are described by (degree of overlap/treatment effect level/censoring level)"))
+```
 
 # 5. Discussion
 
