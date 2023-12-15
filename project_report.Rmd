@@ -7,7 +7,7 @@ output:
   bookdown::pdf_document2:
     toc: false
     number_sections: false
-fontsize: 12pt
+fontsize: 11pt
 header-includes:
   - \usepackage{setspace}\doublespacing
   - \usepackage{mathrsfs}
@@ -381,29 +381,29 @@ T(0)\Big|(X_1, X_3) &\sim h_{Z = 0}(t|X_1, X_3) = \lambda v t^{v-1}\exp(\alpha_1
 \end{aligned}
 $$
 
-Our target estimand is the average causal effect, or $E[T(1) - T(0)]$, which is unconditional on $(X_1, X_3)$. By the law of total expectations and iterated expectations, we see the following:
+Our target estimand is the restricted average causal effect at time = 5, or $E[S_1(5) - S_0(5)]$, which is unconditional on $(X_1, X_3)$. By the law of total expectations and iterated expectations, we see the following:
 $$
 \begin{aligned}
-E[T_i] &= E\Bigg[E\Big[T_i | X_1, X_3)\Big]\Bigg]
+E[S_{T_i}(5)] &= E\Bigg[E\Big[I(T_i \ge 5) | X_1, X_3\Big]\Bigg]
 \\
-&= \int _{X_1, X_3} E\Big[T_i | X_1= x_1, X_3 = x_3]P(X_1 = x_1, X_3 = x_3)d\mu (x_1, x_3)
+&= \int _{X_1, X_3} P\Big[T_i \ge 5 | X_1= x_1, X_3 = x_3]P(X_1 = x_1, X_3 = x_3)d\mu (x_1, x_3)
 \\
-&= \int _{X_1, X_3} E\Big[T_i | X_1= x_1, X_3 = x_3]P(X_1 = x_1) P(X_3 = x_3)d\mu (x_1, x_3)
+&= \int _{X_1, X_3} P\Big[T_i \ge 5 | X_1= x_1, X_3 = x_3]P(X_1 = x_1) P(X_3 = x_3)d\mu (x_1, x_3)
 \end{aligned}
 $$
 
 Let $X_{11}, ..., X_{1m} \sim P(X_1)$ and $X_{31}, ..., X_{3m} \sim P(X_3)$. Then, for a sufficiently large $m$, we note: 
 $$
 \begin{aligned}
-E[T_i] &= \int _{X_1, X_3} E\Big[T_i | X_1= x_1, X_3 = x_3]P(X_1 = x_1) P(X_3 = x_3)d\mu (x_1, x_3) 
+P[T_i \ge 5] &= \int _{X_1, X_3}P\Big[T_i \ge 5 | X_1= x_1, X_3 = x_3]P(X_1 = x_1) P(X_3 = x_3)d\mu (x_1, x_3) 
 \\
-&\approx \sum_{j=1}^m E[T_i|X_1 = x_{1j}, X_3 = x_{3j}]
+&\approx \sum_{j=1}^m P[T_i \ge 5|X_1 = x_{1j}, X_3 = x_{3j}]
 \end{aligned}
 $$
 
-The true value estimates of $E[T(1)]$ and $E[T(0)]$ will be calculated by taking two samples of size $m = 1000000$ from the distributions of $X_1$ and $X_3$ to simulate the distributional behavior of each of these random variables, and sum the computed conditional expectations of $T(1)|(X_{1j}, X_{3j})$ and $T(0)|(X_{1k}, X_{3k})$ for each sample $j$ and $k$, where $j = k = m$. 
+The true value estimates of $S_1(5) = P[T(1) \ge 5]$ and $S_0(5) = P[T(0) \ge 5]$ will be calculated by taking two samples of size $m = 1000000$ from the distributions of $X_1$ and $X_3$ to simulate the distributional behavior of each of these random variables, and sum the computed conditional probabilities of $P[T(1) \ge |(X_{1j}, X_{3j})]$ and $P[T(0) \ge 5|(X_{1k}, X_{3k})]$ for each sample $j$ and $k$, where $j = k = m$. 
 
-The true RACE values that we computed from this procedure were $0.127$ for the "high" treatment effect setting and $0.014$ for the "low" treatment effect setting.
+The true RACE values that we computed from this procedure were $0.12$ for the "high" treatment effect setting and $0.014$ for the "low" treatment effect setting.
 
 The distribution of survival time according to each of these settings and by levels of covariate overlap between treatment groups can be visualized with the following plots:
 
