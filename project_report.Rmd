@@ -178,7 +178,7 @@ The first weighting procedure is to estimate IPTW and IPCW separately. Then the 
   \end{tikzpicture}
 ```
 
-We estimated IPTW using logistic regression with covariates $X_1$, $X_2$, and $X_3$. In separate weighting procedure, we used both logistic regression and Cox-Exponential regression with covariates $X_1$, $X_2$, and $X_3$ to estimate IPCW. All simulations and analyses were conducted in R. The logistic regressions were fitted using `glm` function and Cox-exponential model using `ipcw` from `riskRegression` R package.
+In the separate weighting procedure, IPTW was estimated solely using logistic regression, and IPCW was estimated using both logistic regression and Cox-Exponential regression. The logistic regressions were fitted using `glm` function and the Cox-Exponential models were fit using `ipcw` from the `riskRegression` R package.
 
 ### 2.3.2 Sequential Weighting
 
@@ -401,7 +401,7 @@ P[T_i \ge 5] &= \int _{X_1, X_3}P\Big[T_i \ge 5 | X_1= x_1, X_3 = x_3]P(X_1 = x_
 \end{aligned}
 $$
 
-The true value estimates of $S_1(5) = P[T(1) \ge 5]$ and $S_0(5) = P[T(0) \ge 5]$ will be calculated by taking two samples of size $m = 1000000$ from the distributions of $X_1$ and $X_3$ to simulate the distributional behavior of each of these random variables, and sum the computed conditional probabilities of $P[T(1) \ge |(X_{1j}, X_{3j})]$ and $P[T(0) \ge 5|(X_{1k}, X_{3k})]$ for each sample $j$ and $k$, where $j = k = m$. 
+The true value estimates of $S_1(5) = P[T(1) \ge 5]$ and $S_0(5) = P[T(0) \ge 5]$ will be calculated by taking two samples of size $m = 1000000$ from the distributions of $X_1$ and $X_3$ to simulate the distributional behavior of each of these random variables, and sum the computed conditional probabilities of $P[T(1) \ge 5|(X_{1j}, X_{3j})]$ and $P[T(0) \ge 5|(X_{1k}, X_{3k})]$ for each sample $j$ and $k$, where $j = k = m$. 
 
 The true RACE values that we computed from this procedure were $0.12$ for the "high" treatment effect setting and $0.014$ for the "low" treatment effect setting.
 
