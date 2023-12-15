@@ -488,7 +488,7 @@ In a similar fashion to how the model intercept was selected in the true propens
   \end{tikzpicture}
 ```
 
-We summarized the mean of estimated causal estimand, relative bias and $95\%$ coverage rate from the simulation for separate weighting procedure in Table 1. When using logistic regression to estimate both IPTW and IPCW, we observed smaller relative bias and higher $95\%$ coverage rate among low censoring scenarios regardless of overlap and treatment effect settings. The high overlap scenarios were also observed associated with higher $95\%$ coverage rate. However, such a pattern was not obvious when using Cox model to estimate IPCW. We also checked covaraites balancing by computing absolute standardized difference (ASD) and reported the results in table 2. Contrary to table 1, the performance of the method using logistic regression for IPTW and Cox model for IPCW was better than the model of dual logistic regression in terms of balancing baseline covariates.
+We summarized the mean of estimated causal estimand, relative bias and $95\%$ coverage rate from the simulation for separate weighting procedure in Table 1. When using logistic regression to estimate both IPTW and IPCW, we observed smaller relative bias and higher $95\%$ coverage rate among low censoring scenarios regardless of overlap and treatment effect settings. The high overlap scenarios were also observed associated with higher $95\%$ coverage rate. However, such a pattern was not obvious when using Cox model to estimate IPCW. We also checked covariate balancing by computing absolute standardized difference (ASD) and reported the results in table 2. Contrary to table 1, the performance of the method using logistic regression for IPTW and Cox model for IPCW was better than the model of dual logistic regression in terms of balancing baseline covariates.
 
 ```{r}
 library(kableExtra)
@@ -509,7 +509,7 @@ table1_to_kable %>%
   ) %>%
   janitor::clean_names() %>%
   knitr::kable(
-    col.names = c("Scenario\n(Overlap/Treatment Effect/Censoring)",
+    col.names = c("Scenario*",
                   "True ACE",
                   "Avg. Estimate",
                   "Relative Bias",
@@ -519,10 +519,12 @@ table1_to_kable %>%
                   "95\\% Coverage Rate"
                   ),
       booktabs=TRUE,
-    escape=FALSE
+    escape=FALSE,
+    caption = "Separate Weighting Estimation Results"
   )%>%
   kable_styling(latex_options = c("HOLD_position", "scale_down")) %>% 
-  add_header_above(c(" " = 2, "Dual Logistic" = 3, "Logistic/Cox"=3), escape = FALSE)
+  add_header_above(c(" " = 2, "Dual Logistic" = 3, "Logistic/Cox"=3), escape = FALSE) %>%
+  add_footnote(c("Note: scenarios are described by (degree of overlap/treatment effect level/censoring level)"))
 ```
 
 ```{r}
@@ -544,22 +546,24 @@ table2_to_kable %>%
   janitor::clean_names() %>%
   unnest(x1_asd_raw:x3_asd_wt2) %>%
   knitr::kable(
-    col.names = c("Scenario\n(Overlap/Treatment Effect/Censoring)",
-                  "Unweighted ASD",
-                  "Dual Logistic Weighted ASD",
-                  "Logistic/Cox Weighted ASD",
-                  "Unweighted ASD",
-                  "Dual Logistic Weighted ASD",
-                  "Logistic/Cox Weighted ASD",
-                  "Unweighted ASD",
-                  "Dual Logistic Weighted ASD",
-                  "Logistic/Cox Weighted ASD"
-                  ),
+    col.names = linebreak(c("Scenario*",
+                  "Unweighted\nASD",
+                  "Dual Logistic\nWeighted ASD",
+                  "Logistic/Cox\nWeighted ASD",
+                  "Unweighted\nASD",
+                  "Dual Logistic\nWeighted ASD",
+                  "Logistic/Cox\nWeighted ASD",
+                  "Unweighted\nASD",
+                  "Dual Logistic\nWeighted ASD",
+                  "Logistic/Cox\nWeighted ASD"
+                  ), align="r"),
       booktabs=TRUE,
-    escape=FALSE
+    escape=FALSE,
+     caption = "Separate Weighting Covariate Balance Results"
   )%>%
   kable_styling(latex_options = c("HOLD_position", "scale_down")) %>% 
-  add_header_above(c(" " = 1, "X1" = 3, "X2"=3, "X3" = 3), escape = FALSE)
+  add_header_above(c(" " = 1, "X1" = 3, "X2"=3, "X3" = 3), escape = FALSE) %>%
+  add_footnote(c("Note: scenarios are described by (degree of overlap/treatment effect level/censoring level)"))
 ```
 
 ## 4.2 Sequential Weighting
@@ -629,7 +633,7 @@ seq_weights_res %>%
   ) %>%
   knitr::kable(
     col.names = c(
-      "Scenario\n(Overlap/Treatment Effect/Censoring)", "True ACE",
+      "Scenario*", "True ACE",
       "Avg. Estimate",
       "Relative Bias",
       "95\\% Coverage Rate",
@@ -637,10 +641,12 @@ seq_weights_res %>%
       "Relative Bias",
       "95\\% Coverage Rate"),
     booktabs=TRUE,
-    escape=FALSE
+    escape=FALSE,
+    caption = "Sequential Weighting Estimation Results"
   )%>%
   kable_styling(latex_options = c("HOLD_position", "scale_down")) %>% 
-  add_header_above(c(" " = 2, "IPTW*IPCW" = 3, "IPCW*IPTW"= 3), escape = FALSE)
+  add_header_above(c(" " = 2, "IPTW*IPCW" = 3, "IPCW*IPTW"= 3), escape = FALSE) %>%
+  add_footnote(c("Note: scenarios are described by (degree of overlap/treatment effect level/censoring level)"))
 ```
 
 
