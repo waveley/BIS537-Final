@@ -7,7 +7,7 @@ output:
   bookdown::pdf_document2:
     toc: false
     number_sections: false
-fontsize: 11pt
+fontsize: 12pt
 header-includes:
   - \usepackage{setspace}\doublespacing
   - \usepackage{mathrsfs}
@@ -130,10 +130,25 @@ $$
 
 where $\omega_{IPTW\circ IPCW_i}$ is the composite treatment and censoring weight and all other notation is the same as defined previously.
 
-## 2.3 Weighting Procedures (expand)
+## 2.3 Weighting Procedures
+
+Critical to the construction of the causal estimators are the weighting procedures underlying the construction of the inverse probability weights of both treatment assignment and censoring indication. The goal for both of the procedures that are the subject of investigation in this study is covariate balance between treatment and control groups, such that the study sample would mimic the distribution of the theoretical larger population that it is drawn from. 
+
+All weights constructed in this study were inverse probability weights -- in particular, for the construction of a weight on indicator variable $R$, the weights $w_{IPRW_i}$ for a given subject $i$ were constructed as follows:
+
+$$
+\begin{aligned}
+\mathbb{E}[R|\mathbf{X}] &= e_{R}(\mathbf{X}), \quad\text{ where }\mathbf{X} \text{ is the vector of covariate values}
+\\
+w_{IPRW_i} &= \begin{cases}
+\frac{1}{e_R(\mathbf{X})}, \quad\text{ if R = 1}
+\\
+\frac{1}{1 - e_R(\mathbf{X})}, \quad\text{ if R = 0}
+\end{cases}
+\end{aligned}
+$$
 
 ### 2.3.1 Separate Weighting
-
 
 ```{tikz, echo = FALSE}
 \tikzstyle{block} = [rectangle, draw, text width=6em, text centered, rounded corners, minimum height=4em]
@@ -158,9 +173,11 @@ where $\omega_{IPTW\circ IPCW_i}$ is the composite treatment and censoring weigh
   \end{tikzpicture}
 ```
 
-We estimated IPTW using logistic regression with covariates $X_1$, $X_2$, and $X_3$. In separate weighting procedure, we used both logistic regression and Exponential-Cox model with covariates $X_1$, $X_2$, and $X_3$ to estimate IPCW. All simulations and analyses were conducted in R. The logistic regressions were fitted using $glm()$ function and Cox model using $ipcw()$ from $RiskRegression$ R package.
-
 ### 2.3.2 Sequential Weighting
+
+In this second weighting procedure, weights are first constructed based on either treatment assignment or censoring indication propensity scores. After this, the weighted dataset would be used to generate weights based on the indication that was not used in the first step of weighting. The causal estimand would be estimated using the second set of weights applied to to the weighted dataset from the first step of weighting.
+
+We have considered the utility of both indicator variables (treatment assignment and censoring indication) as weighting starting points because, under the assumption that censoring time and treatment assignment are independent of each other in this study, the relationship between censoring indication and treatment assignment is one in which temporality is difficult to evaluate. 
 
 ```{tikz, echo = FALSE}
 \tikzstyle{block} = [rectangle, draw, text width=6em, text centered, rounded corners, minimum height=4em]
@@ -277,7 +294,7 @@ cov_prop_low_overlap <-
 
 The distribution of propensity scores according to each of these settings can be visualized with the following plots, demonstrating that the levels of overlap between treatment groups have indeed been achieved:
 
-```{r, eval=TRUE, fig.width = 8, fig.height = 2}
+```{r, eval=TRUE, fig.width = 8, fig.height = 1}
 high_overlap_gg <- cov_prop_high_overlap %>% 
   ggplot(
   aes(x = prop_score, fill = as.factor(trt))
@@ -532,6 +549,8 @@ In a similar fashion to how the model intercept was selected in the true propens
 # 4. Results
 
 ## 4.1 Separate Weighting
+
+We estimated IPTW using logistic regression with covariates $X_1$, $X_2$, and $X_3$. In separate weighting procedure, we used both logistic regression and Exponential-Cox model with covariates $X_1$, $X_2$, and $X_3$ to estimate IPCW. All simulations and analyses were conducted in R. The logistic regressions were fitted using $glm()$ function and Cox model using $ipcw()$ from $RiskRegression$ R package.
 
 We summarized the mean of estimated causal estimand, relative bias and $95\%$ coverage rate from the simulation for separate weighting procedure in Table 1. When using logistic regression to estimate both IPTW and IPCW, we observed smaller relative bias and higher $95\%$ coverage rate among low censoring scenarios regardless of overlap and treatment effect settings. The high overlap scenarios were also observed associated with higher $95\%$ coverage rate. However, such a pattern was not obvious when using Cox model to estimate IPCW. We also checked covariate balancing by computing absolute standardized difference (ASD) and reported the results in table 2. Contrary to table 1, the performance of the method using logistic regression for IPTW and Cox model for IPCW was better than the model of dual logistic regression in terms of balancing baseline covariates.
 
