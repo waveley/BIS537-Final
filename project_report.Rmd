@@ -560,9 +560,11 @@ In a similar fashion to how the model intercept was selected in the true propens
 
 # 4. Results
 
+In the conduct of this simulation study, data were randomly generated from the distributions described in the previous section to simulate random samples of size 1000. These datasets were then weighted through one of the four described weighting procedures, covariate balance was assessed through absolute standard difference (ASD), and weighted Kaplan-Meier estimates were computed to estimate $\Delta_{RACE}(5)$. Bootstrap replicates were drawn to compute the relative bias and empirical 95% coverage rates, and their results were summarized in tabular as well as graphical formats.
+
 ## 4.1 Separate Weighting
 
-We summarized the mean of estimated causal estimand, relative bias and $95\%$ coverage rate from the simulation for separate weighting procedure in Table 1. When using logistic regression to estimate both IPTW and IPCW, we observed smaller relative bias and higher $95\%$ coverage rate among low censoring scenarios regardless of overlap and treatment effect settings. The high overlap scenarios were also observed associated with higher $95\%$ coverage rate. However, such a pattern was not obvious when using Cox model to estimate IPCW. We also checked covariate balancing by computing absolute standardized difference (ASD) and reported the results in table 2. Contrary to table 1, the performance of the method using logistic regression for IPTW and Cox model for IPCW was better than the model of dual logistic regression in terms of balancing baseline covariates.
+The following table and plot describe the covariate balance results from the two separate weights weighting procedures: 
 
 ```{r}
 load("table2.RData")
@@ -682,7 +684,9 @@ asd_gg_3 <-
 (asd_gg_1 + asd_gg_2 + asd_gg_3) + plot_layout(guides = "collect") + plot_annotation(title = "ASD by Scenario and Weighting Procedure\nSeparate Weighting Procedures")
 ```
 
+We note that the weighting method using logistic regression for IPTW and Cox model for IPCW out-performed the dual-logistic regression weighting method in terms of balancing baseline covariates, as the logistic/Cox method was consistently associated with lower ASDs than the dual-logistic regression method. Both of these methods produced better covariate balance than what existed in the unweighted data on all covariates excluding $X_3$.
 
+The summarized results for the estimation of the causal estimand are summarized in the following table and plot:
 
 ```{r}
 load("table1.RData")
@@ -760,7 +764,7 @@ bias_gg_1 <-
     col = name,
     group = name)
   ) +
-  labs(x = "Scenario", y = "Relative Bias", col = "Weighting Procedure", title = "Relative Bias") +
+  labs(x = "Scenario", y = "", col = "Weighting Procedure", title = "Relative Bias") +
   geom_hline(yintercept = 0, col="red", linetype="dashed") +
   geom_point() + 
   geom_line() + 
@@ -774,7 +778,7 @@ coverage_gg <-
     col = name,
     group = name)
   ) +
-  labs(x = "Scenario", y = "95% Coverage Rate", col = "Weighting Procedure", title = "95% Coverage Rates") +
+  labs(x = "Scenario", y = "", col = "Weighting Procedure", title = "95% Coverage Rates") +
   geom_hline(yintercept = 0.95, col="red", linetype="dashed") +
   geom_point() + 
   geom_line() + 
@@ -783,7 +787,7 @@ coverage_gg <-
 (bias_gg_1 + coverage_gg) + plot_layout(guides = "collect") + plot_annotation(title = "Bias and 95% Coverage by Scenario and Weighting Procedure\nSeparate Weighting Procedures")
 ```
 
-
+When using logistic regression to estimate both IPTW and IPCW, we observed smaller relative bias and higher 95% coverage rate among low censoring scenarios regardless of overlap and treatment effect settings. The high overlap scenarios were also observed associated with higher 95% coverage rate. However, such a pattern was not obvious when using Cox model to estimate IPCW.
 
 ## 4.2 Sequential Weighting
 
@@ -912,7 +916,7 @@ asd_gg_3 <-
 (asd_gg_1 + asd_gg_2 + asd_gg_3) + plot_layout(guides = "collect") + plot_annotation(title = "ASD by Scenario and Weighting Procedure\nSequential Weighting Procedures")
 ```
 
-It is apparent that there is improvement across all simulation settings in covariate balance in the IPTW$\circ$IPCW weighting method over the unweighted observed data in covariates $X_1$ and $X_2$, though this is not the case in $X_3$. We note that the covariate balance improved for most cases through the IPCW$\circ$IPTW weighting method over the unweighted observed data in $X_1$ and $X_2$, with the exclusion of the high-overlap settings, and see extreme imbalance in $X_3$. 
+It is apparent that there is improvement across all simulation settings in covariate balance in the IPTW$\circ$IPCW weighting method over the unweighted observed data in covariates $X_1$ and $X_2$, though this is not the case in $X_3$. We note that the covariate balance improved for most cases through the IPCW$\circ$IPTW weighting method over the unweighted observed data in $X_1$ and $X_2$, with the exclusion of the high-overlap settings, but the improvement was not as large as the IPTW$\circ$IPCW procedure. In addition, there was greater imbalance in $X_3$ in the IPCW$\circ$IPTW procedure than both the IPTW$\circ$IPCW and unweighted procedures. 
 
 Now, we will assess the results under these two weighting procedures:
 
@@ -954,10 +958,9 @@ seq_weights_res %>%
     caption = "Sequential Weighting Estimation Results$^\\text{a}$"
   )%>%
   kable_styling(latex_options = c("HOLD_position", "scale_down")) %>% 
-  add_header_above(c(" " = 2, "IPTW$\\circ$IPCW" = 3, "IPCW$\\circ$IPTW"= 3), escape = FALSE) %>%
-  add_footnote(c("Averaged over 1000 total bootstrapped replicates (100 bootstrap replicates over each of 100 samples)", "Note: scenarios are described by (degree of overlap/treatment effect level/censoring level)"))
+  add_header_above(c(" " = 2, "IPTW*IPCW" = 3, "IPCW*IPTW"= 3), escape = FALSE) %>%
+  add_footnote(c("Obtained over 1000 total bootstrapped replicates (100 bootstrap replicates over each of 100 samples)", "Note: scenarios are described by (degree of overlap/treatment effect level/censoring level)"))
 ```
-
 
 ```{r, fig.height = 1, fig.width = 8}
 to_seq_bias_gg <- 
@@ -994,7 +997,7 @@ bias_gg_1 <-
     col = name,
     group = name)
   ) +
-  labs(x = "Scenario", y = "Relative Bias", col = "Weighting Procedure", title = "Relative Bias") +
+  labs(x = "Scenario", y = "", col = "Weighting Procedure", title = "Relative Bias") +
   geom_hline(yintercept = 0, col="red", linetype="dashed") +
   geom_point() + 
   geom_line() + 
@@ -1008,20 +1011,34 @@ coverage_gg <-
     col = name,
     group = name)
   ) +
-  labs(x = "Scenario", y = "95% Coverage Rate", col = "Weighting Procedure", title = "95% Coverage Rates") +
+  labs(x = "Scenario", y = "", col = "Weighting Procedure", title = "95% Coverage Rates") +
   geom_hline(yintercept = 0.95, col="red", linetype="dashed") +
   geom_point() + 
   geom_line() + 
   coord_flip()
 
-(bias_gg_1 + coverage_gg) + plot_layout(guides = "collect") + plot_annotation(title = "Bias and 95% Coverage by Scenario and Weighting Procedure\nSequentials Weighting Procedures")
+(bias_gg_1 + coverage_gg) + plot_layout(guides = "collect") + plot_annotation(title = "Bias and 95% Coverage by Scenario and Weighting Procedure\nSequential Weighting Procedures")
 ```
+
+Here, we see that the IPCW$\circ$IPTW seems to produce less relative bias than the IPTW$\circ$IPCW method overall. However, the IPTW$\circ$IPCW method indicates better empirical 95% confidence interval coverage rate than the IPCW$\circ$IPTW method, in which many scenarios had coverage rates that were very close to the aspiration of 95%. 
+
+The IPTW$\circ$IPCW method seemed to indicate best performances under settings of high censoring and high treatment effect, irrespective of the degree of treatment overlap. There was less of an observable trend with the IPCW$\circ$IPTW method, but both methods had the best performance in the "all-high" setting, where the relative bias was indicated to be very small and the 95% confidence interval coverage rate was high (95% for the IPCW$\circ$IPTW method and approximately 100% for the IPTW$\circ$IPCW) method. 
+
+In these two procedures, high levels of relative bias did not necessarily correspond with lower 95% coverage, and vice versa -- in fact, some of the scenarios in which bias for both sequential weighting methods was the lowest also corresponded with lower 95% coverage (specifically the High/High/Low setting), while the scenario that was associated with the highest relative bias for both methods still produced a reasonable 95% coverage in both methods (Low/Low/Low setting). 
+
+## 4.3 Comparison of Procedures
+
+When considering covariate balance, the two separate weighting procedures as well as the IPTW$\circ$IPCW sequential weighting procedure performed similarly. The IPCW$\circ$IPTW procedure produced the most sporadic balancing results out of the four weighting methods. 
+
+These weighting procedures produced interesting results with respect to relative bias and 95% confidence interval coverage rates. Both of the sequential weighting procedures seemed to out-perform the separate weighting procedures in the 95% empirical coverage rates, with the lowest coverage in the sequential procedures being around 84% and the majority of which achieving around 92% coverage. 
+
+In addition, it was interesting to see that the separate weighting procedures seemed to negatively bias the causal estimates while the sequential procedures seemed to positively bias estimates. The bias in the separate weighting procedures seemed to be more predictable in behavior than the sequential weighting procedures, as low levels of censoring in the separate weighting procedures always corresponded with lower levels of relative bias, holding all other settings constant. 
 
 # 5. Discussion
 
-In this project, we conducted a simulation studies to evaluate the performances of two weighting schemes under causal survival analysis framework. We specified 12 simulation scenarios which took different treatment effects, overlaps of covariates distribution, and censoring rates into consideration. Trends in the separate weighting procedure with logistic regressions for both IPTW and IPCW match what we expected, where we observed lower overlap and higher censoring rates scenarios corresponded with lower coverage rates. In addition, this procedure performed better in lower censoring settings than higher censoring counterparts. However, when using $ipcw()$ to calculate IPCW with Cox model, we found increases in relative bias and decreases in the coverage rates. For sequential weighting procedure, there were no clear trends in the sequential weighting procedure, where most of the relative bias ranged around $10\%$ to $20\%$ and most of the coverage rates were above $90\%$.  
+In this project, we conducted a simulation studies to evaluate the performances of two weighting schemes under causal survival analysis framework. We specified 12 simulation scenarios which took different treatment effects, overlaps of covariates distribution, and censoring rates into consideration. Trends in the separate weighting procedure with logistic regressions for both IPTW and IPCW match what we expected, where we observed lower overlap and higher censoring rates scenarios corresponded with lower coverage rates. In addition, this procedure performed better in lower censoring settings than higher censoring counterparts. However, when using `ipcw` to calculate IPCW with Cox model, we found increases in relative bias and decreases in the coverage rates. For sequential weighting procedure, there were no clear trends in the sequential weighting procedure, where most of the relative bias ranged around 10% to 20% and most of the coverage rates were above 90%.  
 
-However, the relative bias is, in general, lower than what we expected, which may be attributed to the following reasons. First of all, all the weighting models in our analysis were misspecified, because we tried to mimic the real world situation in which no one knew the true models. Secondly, due to the time constraint we didn't validate the $ipcw()$ function when using it, which may cause a mistaken usage of it.    
+However, the relative bias is, in general, lower than what we expected, which may be attributed to the following reasons. First of all, all the weighting models in our analysis were misspecified, because we tried to mimic the real world situation in which no one knew the true models. Secondly, due to the time constraint we didn't validate the `ipcw` function when using it, which may cause a mistaken usage of it.    
 
 \newpage
 # 6. References
