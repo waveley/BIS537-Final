@@ -423,7 +423,7 @@ bottom_out_ggs + plot_layout(guides = "collect") + plot_annotation(title = "Dens
 
 ### 3.4 True Censoring Model
 
-The censoring model will be defined using the following exponential model, taking in covariates $X_2$ and $X_3$, and independent of $T_i^C$, $T_i^S$, and $Z_i$:
+The censoring model will be defined using the following exponential model, taking in covariates $X_2$ and $X_3$, and is generated independently of $T_i^C$, $T_i^S$, and $Z_i$:
 $$
 \begin{aligned}
 T^{C}_i \sim \text{Exponential}(\lambda \exp(K_i)),
@@ -452,6 +452,84 @@ C_i(T_i^S, T_i^C) = \begin{cases}
 \end{cases}
 \end{aligned}
 $$
+It is critical to note that although $T_i^C$ is by definition independent of $T_i^S$ and $Z_i$, the censoring indication, $C_i$ is not. 
+
+In a similar fashion to how the model intercept was selected in the true propensity score model in order to fix a treatment proportion in expectation, after fixing $\gamma_2 = 2$ and $\gamma_3 = 4$, a numerical search procedure was also run to select a $\gamma_0$ so that the proportion of censored subjects could be varied across two levels, corresponding to low (25%) and high (50%) levels of censoring. These selected intercepts varied according to the magnitude of treatment effect, as well as the defined censoring level, consequentially resulting in four defined $\gamma_0$ values corresponding to the four treatment effect and censoring level categories.
+
+# 4. Analysis
+
+## 4.1 Separate Weighting
+
+```{tikz, echo = FALSE}
+\tikzstyle{block} = [rectangle, draw, text width=6em, text centered, rounded corners, minimum height=4em]
+\tikzstyle{calculation} = [circle, draw, text width=4em, text centered, minimum height=4em]
+\tikzstyle{result} = [rectangle, draw, text width=7em, text centered, minimum height=4em]
+
+\tikzstyle{line} = [draw, -latex]
+\tikzstyle{doublearr}=[latex-latex, black, line width=0.5pt]
+  \begin{tikzpicture}[auto]
+      % Place nodes
+      \node [block] (D) {Observed Data};
+      \node [calculation, right of = D, xshift = 2cm, yshift = 1cm] (IPTW) {IPTW};
+      \node [calculation, right of = D, xshift = 2cm, yshift = -1cm] (IPCW) {IPCW};
+      \node [block, right of = D, xshift = 5cm] (WD) {IPTW $\times$ IPCW*};
+      \node [block, text width = 3cm, right of = WD, xshift = 3cm] (EY) {$\hat{E}[S(1) - S(0)]$};
+      % Draw edges
+      \path [line] (D) -- (IPTW);
+      \path [line] (D) -- (IPCW);
+      \path [line] (IPTW) -- (WD);
+      \path [line] (IPCW) -- (WD);
+      \path [line] (WD) -- (EY);
+  \end{tikzpicture}
+```
+
+## 4.2 Sequential Weighting
+
+```{tikz, echo = FALSE}
+\tikzstyle{block} = [rectangle, draw, text width=6em, text centered, rounded corners, minimum height=4em]
+\tikzstyle{calculation} = [circle, draw, text width=4em, text centered, minimum height=4em]
+\tikzstyle{result} = [rectangle, draw, text width=7em, text centered, minimum height=4em]
+
+\tikzstyle{line} = [draw, -latex]
+\tikzstyle{doublearr}=[latex-latex, black, line width=0.5pt]
+  \begin{tikzpicture}[auto]
+      % Place nodes
+      \node [block] (D) {Observed Data};
+      \node [calculation, right of = D, xshift = 1.5cm] (IPTW) {IPTW};
+      \node [block, right of = IPTW, xshift = 1.5cm] (WD1) {IPTW*};
+      \node [calculation, right of = WD1, xshift = 1.5cm] (IPCW) {IPCW};
+      \node [block, right of = IPCW, xshift = 1.5cm] (WD2) {IPCW $\circ$ IPTW*};
+      \node [block, text width = 3cm, right of = WD2, xshift = 2.5cm] (EY) {$\hat{E}[S(1) - S(0)]$};
+
+      % second set of nodes
+
+      \node [block, below of = D, yshift = 4cm] (DR) {Observed Data};
+      \node [calculation, right of = DR, xshift = 1.5cm] (IPCWR) {IPCW};
+      \node [block, right of = IPCWR, xshift = 1.5cm] (WD1R) {IPCW*};
+      \node [calculation, right of = WD1R, xshift = 1.5cm] (IPTWR) {IPTW};
+      \node [block, right of = IPTWR, xshift = 1.5cm] (WD2R) {IPTW $\circ$ IPCW*};
+      \node [block, text width = 3cm, right of = WD2R, xshift = 2.5cm] (EYR) {$\hat{E}[S(1) - S(0)]$};
+
+  % Draw edges
+      \path [line] (D) -- (IPTW);
+      \path [line] (IPTW) -- (WD1);
+      \path [line] (WD1) -- (IPCW);
+      \path [line] (IPCW) -- (WD2);
+      \path [line] (WD2) -- (EY);
+
+      \path [line] (DR) -- (IPCWR);
+      \path [line] (IPCWR) -- (WD1R);
+      \path [line] (WD1R) -- (IPTWR);
+      \path [line] (IPTWR) -- (WD2R);
+      \path [line] (WD2R) -- (EYR);
+  \end{tikzpicture}
+```
+
+# 5. Results
+
+
+
+# 6. Discussion
 
 
 
