@@ -102,7 +102,7 @@ $$
 In the separate weighting procedure, to incorporate both the inverse probability treatment weights (IPTW) and the inverse probability of censoring weights (IPCW), we employed the usage of the non-parametric weighted Kaplan-Meier estimator defined by Cheng et al. (2022). This estimator is defined as follows:
 $$
 \begin{aligned}
-  \hat{\Delta}(t)&=\hat{S}(1)-\hat{S}(0)
+  \hat{\Delta}(t)&=\hat{S}_1(t)-\hat{S}_0(t)
   \\
   &=\Bigg(1-\frac{\sum_{i=1}^{n}\omega_{IPTW_i}Z_i\delta_iI(U_i\leq t)\omega_{IPCW_i}}{\sum_{i=1}^{n}\omega_{IPTW_i}Z_i}\Bigg)-\Bigg(1-\frac{\sum_{i=1}^{n}\omega_{IPTW_i}(1-Z_i)\delta_iI(U_i\leq t)\omega_{IPCW_i}}{\sum_{i=1}^{n}\omega_{IPTW_i}(1-Z_i)}\Bigg)
   \end{aligned}
@@ -119,17 +119,17 @@ $$
 The estimators used in the sequentially weighted procedure will similarly be weighted Kaplan-Meier estimators -- however, these will be distinct from the previously defined estimator in that there will be the need to adjust for one set of weights only. The estimator will thus have the following form, both generally and at $t = 5$:
 $$
 \begin{aligned}
-  \hat{\Delta}(t)&=\hat{S}(1)-\hat{S}(0)
+  \hat{\Delta}(t)&=\hat{S}_1(t)-\hat{S}_0(t)
   \\
   &=\Bigg(1-\frac{\sum_{i=1}^{n}\omega_{IPTW\circ IPCW_i}Z_i\delta_iI(U_i\leq t)}{\sum_{i=1}^{n}\omega_{IPTW\circ IPCW_i}Z_i}\Bigg)-\Bigg(1-\frac{\sum_{i=1}^{n}\omega_{IPTW\circ IPCW_i}(1-Z_i)\delta_iI(U_i\leq t)}{\sum_{i=1}^{n}\omega_{IPTW\circ IPCW_i}(1-Z_i)}\Bigg)
   \\
-  \hat{\Delta}(5)&=\hat{S}(1)-\hat{S}(0)
+  \hat{\Delta}(5)&=\hat{S}_1(5)-\hat{S}_0(5)
   \\
   &=\Bigg(1-\frac{\sum_{i=1}^{n}\omega_{IPTW\circ IPCW_i}Z_i\delta_iI(U_i\leq 5)}{\sum_{i=1}^{n}\omega_{IPTW\circ IPCW_i}Z_i}\Bigg)-\Bigg(1-\frac{\sum_{i=1}^{n}\omega_{IPTW\circ IPCW_i}(1-Z_i)\delta_iI(U_i\leq 5)}{\sum_{i=1}^{n}\omega_{IPTW\circ IPCW_i}(1-Z_i)}\Bigg)
 \end{aligned}
 $$
 
-where $\omega_{IPTW\circ IPCW_i}$ is the composite treatment and censoring weight and all other notation is the same as defined previously.
+where $\omega_{IPTW\circ IPCW_i}$ is the composite treatment and censoring weight (and likewise for the composite censoring and treatment weight) and all other notation is the same as defined previously.
 
 ## 2.3 Weighting Procedures
 
