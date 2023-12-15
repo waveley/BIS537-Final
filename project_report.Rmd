@@ -66,7 +66,7 @@ While the ideal setting to conduct causal inference on survival outcomes are ran
 
 Time-to-event outcomes are of great interest to investigators across a variety of clinical settings, however present analytical difficulties even within the constrains of a randomized controlled trial. In particular, the non-observation of an event yet loss of a subject's data, or censoring, presents another missing data issue that the investigator has need to consider. This issue is compounded in the setting of a non-randomized or observational study, where exchangeability between treatment groups cannot be assumed of the collected data.
 
-Several procedures addressing this dual-level missing data issue in the estimation of time-to-event causal effects have been explored previously. Some of these procedures extend the idea of inverse probability weighting to the setting of survival analysis in constructing a combined treatment and censoring weights (Hernan 2000, Cheng 2022) to approximate exchangeability and estimating the causal estimand through a weighted estimator. Other methods approach the problem by obtaining survival outcomes for each subject through a jackknife procedure (Andersen 2017) and estimate the causal estimand based on those pseudo-observed endpoints. The pseudo-observaions approach has been further improved upon with the employment of propensity score weighting to close the distance between the collected sample and the target population (Li 2021) as well as with the recent proposal of a doubly-robust estimation technique (Wang 2023) to allow for some flexibility with regards to model misspecification. 
+Several procedures addressing this dual-level missing data issue in the estimation of time-to-event causal effects have been explored previously. Some of these procedures extend the idea of inverse probability weighting to the setting of survival analysis in constructing a combined treatment and censoring weights (Hernan 2000, Cheng 2022) to approximate exchangeability and estimating the causal estimand through a weighted estimator. Other methods approach the problem by obtaining survival outcomes for each subject through a jackknife procedure (Andersen 2010) and estimate the causal estimand based on those pseudo-observed endpoints. The pseudo-observaions approach has been further improved upon with the employment of propensity score weighting to close the distance between the collected sample and the target population (Li 2021) as well as with the recent proposal of a doubly-robust estimation technique (Wang 2023) to allow for some flexibility with regards to model misspecification. 
 
 In this study, we are interested in revisiting the weighting methods and are proposing a new procedure in which model misspecification may be implicitly adjusted for. In doing so, we will first employ the two-arm weighting method established by Cheng et.al (2022), in which weights based on the probability of treatment and the probability of censoring are calculated and used together in estimating the causal estimand of interest. We will then compare its performance to the results obtained from a single-arm sequential weighting method that we have developed, where weights are constructed iteratively, and the final compositely-weighted dataset will then be used to estimate the causal estimand.
 
@@ -76,7 +76,7 @@ The remainder of this report is organized as follows: in section 2, we introduce
 
 ## 2.1 Causal Survival Estimand
 
-While there are several causal estimands that could be of interest, we will be focusing our study on the restricted average causal effect (RACE) for ease of interpretation. In Mao et al. 2018, this was defined as follows:
+While there are several causal estimands that could be of interest, we will be focusing our study on the restricted average causal effect (RACE) for ease of interpretation. In Mao et al. (2018), this was defined as follows:
 $$
 \begin{aligned}
   \Delta_{RACE} &= \frac{E[\omega(e_i)\min(T_{1i}, t^*)]}{E[\omega(e_i)]} - \frac{E[\omega(e_i)\min(T_{0i}, t^*)]}{E[\omega(e_i)]}
@@ -103,15 +103,15 @@ $$
 \begin{aligned}
   \hat{\Delta}(t)&=\hat{S}(1)-\hat{S}(0)
   \\
-  &=\Bigg(1-\frac{\sum_{i=1}^{n}\omega_{IPTW_i}A_i\delta_iI(U_i\leq t)\omega_{IPCW_i}}{\sum_{i=1}^{n}\omega_{IPTW_i}A_i}\Bigg)-\Bigg(1-\frac{\sum_{i=1}^{n}\omega_{IPTW_i}(1-A_i)\delta_iI(U_i\leq t)\omega_{IPCW_i}}{\sum_{i=1}^{n}\omega_{IPTW_i}(1-A_i)}\Bigg)
+  &=\Bigg(1-\frac{\sum_{i=1}^{n}\omega_{IPTW_i}Z_i\delta_iI(U_i\leq t)\omega_{IPCW_i}}{\sum_{i=1}^{n}\omega_{IPTW_i}Z_i}\Bigg)-\Bigg(1-\frac{\sum_{i=1}^{n}\omega_{IPTW_i}(1-Z_i)\delta_iI(U_i\leq t)\omega_{IPCW_i}}{\sum_{i=1}^{n}\omega_{IPTW_i}(1-Z_i)}\Bigg)
   \end{aligned}
 $$
 
-where $T_i^{S}$ is the event time of interest, $T_i^{C}$ is the censoring time, $U_i=min(T_i^{S}, T_i^{C})$ is the observed time in study, $\delta_i$ is the censoring indicator, $A_i$ is the treatment indicator, $I(U_i\leq t)$ is the indicator for the observed time being less than the upper limit of time $t$, and $\omega_{IPTW_i}$ and $\omega_{IPCW_i}$ are the inverse pIPTW and IPCW respectively. Then, our estimator would be defined as follows, at $t = 5$: 
+where $T_i^{S}$ is the event time of interest, $T_i^{C}$ is the censoring time, $U_i=min(T_i^{S}, T_i^{C})$ is the observed time in study, $\delta_i$ is the censoring indicator, $Z_i$ is the treatment indicator, $I(U_i\leq t)$ is the indicator for the observed time being less than the upper limit of time $t$, and $\omega_{IPTW_i}$ and $\omega_{IPCW_i}$ are IPTW and IPCW respectively. Then, our estimator would be defined as follows, at $t = 5$: 
 $$
 \begin{aligned}
-  \hat{\Delta}(5)&= \Bigg(1-\frac{\sum_{i=1}^{n}\omega_{IPTW_i}A_i\delta_iI(U_i\leq 5)\omega_{IPCW_i}}{\sum_{i=1}^{n}\omega_{IPTW_i}A_i}\Bigg)
-  -\Bigg(1-\frac{\sum_{i=1}^{n}\omega_{IPTW_i}(1-A_i)\delta_iI(U_i\leq 5)\omega_{IPCW_i}}{\sum_{i=1}^{n}\omega_{IPTW_i}(1-A_i)}\Bigg)
+  \hat{\Delta}(5)&= \Bigg(1-\frac{\sum_{i=1}^{n}\omega_{IPTW_i}Z_i\delta_iI(U_i\leq 5)\omega_{IPCW_i}}{\sum_{i=1}^{n}\omega_{IPTW_i}Z_i}\Bigg)
+  -\Bigg(1-\frac{\sum_{i=1}^{n}\omega_{IPTW_i}(1-Z_i)\delta_iI(U_i\leq 5)\omega_{IPCW_i}}{\sum_{i=1}^{n}\omega_{IPTW_i}(1-Z_i)}\Bigg)
 \end{aligned}
 $$ 
 
@@ -120,11 +120,11 @@ $$
 \begin{aligned}
   \hat{\Delta}(t)&=\hat{S}(1)-\hat{S}(0)
   \\
-  &=\Bigg(1-\frac{\sum_{i=1}^{n}\omega_{IPTW\circ IPCW_i}A_i\delta_iI(U_i\leq t)}{\sum_{i=1}^{n}\omega_{IPTW\circ IPCW_i}A_i}\Bigg)-\Bigg(1-\frac{\sum_{i=1}^{n}\omega_{IPTW\circ IPCW_i}(1-A_i)\delta_iI(U_i\leq t)}{\sum_{i=1}^{n}\omega_{IPTW\circ IPCW_i}(1-A_i)}\Bigg)
+  &=\Bigg(1-\frac{\sum_{i=1}^{n}\omega_{IPTW\circ IPCW_i}Z_i\delta_iI(U_i\leq t)}{\sum_{i=1}^{n}\omega_{IPTW\circ IPCW_i}Z_i}\Bigg)-\Bigg(1-\frac{\sum_{i=1}^{n}\omega_{IPTW\circ IPCW_i}(1-Z_i)\delta_iI(U_i\leq t)}{\sum_{i=1}^{n}\omega_{IPTW\circ IPCW_i}(1-Z_i)}\Bigg)
   \\
   \hat{\Delta}(5)&=\hat{S}(1)-\hat{S}(0)
   \\
-  &=\Bigg(1-\frac{\sum_{i=1}^{n}\omega_{IPTW\circ IPCW_i}A_i\delta_iI(U_i\leq 5)}{\sum_{i=1}^{n}\omega_{IPTW\circ IPCW_i}A_i}\Bigg)-\Bigg(1-\frac{\sum_{i=1}^{n}\omega_{IPTW\circ IPCW_i}(1-A_i)\delta_iI(U_i\leq 5)}{\sum_{i=1}^{n}\omega_{IPTW\circ IPCW_i}(1-A_i)}\Bigg)
+  &=\Bigg(1-\frac{\sum_{i=1}^{n}\omega_{IPTW\circ IPCW_i}Z_i\delta_iI(U_i\leq 5)}{\sum_{i=1}^{n}\omega_{IPTW\circ IPCW_i}Z_i}\Bigg)-\Bigg(1-\frac{\sum_{i=1}^{n}\omega_{IPTW\circ IPCW_i}(1-Z_i)\delta_iI(U_i\leq 5)}{\sum_{i=1}^{n}\omega_{IPTW\circ IPCW_i}(1-Z_i)}\Bigg)
 \end{aligned}
 $$
 
@@ -132,10 +132,78 @@ where $\omega_{IPTW\circ IPCW_i}$ is the composite treatment and censoring weigh
 
 ## 2.3 Weighting Procedures (expand)
 
+### 2.3.1 Separate Weighting
+
+
+```{tikz, echo = FALSE}
+\tikzstyle{block} = [rectangle, draw, text width=6em, text centered, rounded corners, minimum height=4em]
+\tikzstyle{calculation} = [circle, draw, text width=4em, text centered, minimum height=4em]
+\tikzstyle{result} = [rectangle, draw, text width=7em, text centered, minimum height=4em]
+
+\tikzstyle{line} = [draw, -latex]
+\tikzstyle{doublearr}=[latex-latex, black, line width=0.5pt]
+  \begin{tikzpicture}[auto]
+      % Place nodes
+      \node [block] (D) {Observed Data};
+      \node [calculation, right of = D, xshift = 2cm, yshift = 1cm] (IPTW) {IPTW};
+      \node [calculation, right of = D, xshift = 2cm, yshift = -1cm] (IPCW) {IPCW};
+      \node [block, right of = D, xshift = 5cm] (WD) {IPTW $\times$ IPCW*};
+      \node [block, text width = 3cm, right of = WD, xshift = 3cm] (EY) {$\hat{E}[S(1) - S(0)]$};
+      % Draw edges
+      \path [line] (D) -- (IPTW);
+      \path [line] (D) -- (IPCW);
+      \path [line] (IPTW) -- (WD);
+      \path [line] (IPCW) -- (WD);
+      \path [line] (WD) -- (EY);
+  \end{tikzpicture}
+```
+
 We estimated IPTW using logistic regression with covariates $X_1$, $X_2$, and $X_3$. In separate weighting procedure, we used both logistic regression and Exponential-Cox model with covariates $X_1$, $X_2$, and $X_3$ to estimate IPCW. All simulations and analyses were conducted in R. The logistic regressions were fitted using $glm()$ function and Cox model using $ipcw()$ from $RiskRegression$ R package.
 
+### 2.3.2 Sequential Weighting
 
-## 3. Data Generation
+```{tikz, echo = FALSE}
+\tikzstyle{block} = [rectangle, draw, text width=6em, text centered, rounded corners, minimum height=4em]
+\tikzstyle{calculation} = [circle, draw, text width=4em, text centered, minimum height=4em]
+\tikzstyle{result} = [rectangle, draw, text width=7em, text centered, minimum height=4em]
+
+\tikzstyle{line} = [draw, -latex]
+\tikzstyle{doublearr}=[latex-latex, black, line width=0.5pt]
+  \begin{tikzpicture}[auto]
+      % Place nodes
+      \node [block] (D) {Observed Data};
+      \node [calculation, right of = D, xshift = 1.5cm] (IPTW) {IPTW};
+      \node [block, right of = IPTW, xshift = 1.5cm] (WD1) {IPTW*};
+      \node [calculation, right of = WD1, xshift = 1.5cm] (IPCW) {IPCW};
+      \node [block, right of = IPCW, xshift = 1.5cm] (WD2) {IPCW $\circ$ IPTW*};
+      \node [block, text width = 3cm, right of = WD2, xshift = 2.5cm] (EY) {$\hat{E}[S(1) - S(0)]$};
+
+      % second set of nodes
+
+      \node [block, below of = D, yshift = 4cm] (DR) {Observed Data};
+      \node [calculation, right of = DR, xshift = 1.5cm] (IPCWR) {IPCW};
+      \node [block, right of = IPCWR, xshift = 1.5cm] (WD1R) {IPCW*};
+      \node [calculation, right of = WD1R, xshift = 1.5cm] (IPTWR) {IPTW};
+      \node [block, right of = IPTWR, xshift = 1.5cm] (WD2R) {IPTW $\circ$ IPCW*};
+      \node [block, text width = 3cm, right of = WD2R, xshift = 2.5cm] (EYR) {$\hat{E}[S(1) - S(0)]$};
+
+  % Draw edges
+      \path [line] (D) -- (IPTW);
+      \path [line] (IPTW) -- (WD1);
+      \path [line] (WD1) -- (IPCW);
+      \path [line] (IPCW) -- (WD2);
+      \path [line] (WD2) -- (EY);
+
+      \path [line] (DR) -- (IPCWR);
+      \path [line] (IPCWR) -- (WD1R);
+      \path [line] (WD1R) -- (IPTWR);
+      \path [line] (IPTWR) -- (WD2R);
+      \path [line] (WD2R) -- (EYR);
+  \end{tikzpicture}
+```
+
+
+# 3. Data Generation
 
 We will generate data in accordance with the following relationships, and the causal effect of interest is highlighted in red:
 
@@ -167,13 +235,13 @@ We will generate data in accordance with the following relationships, and the ca
 
 Each component will be described in further detail in the following sections. 
 
-### 3.1 Covariates 
+## 3.1 Covariates 
 
 As described in the previous diagram, we will be utilizing three covariates in this simulation study: $X_1$, $X_2$, $X_3$. These covariates have the following distributions: $X_1 \sim  \text{Bernoulli}(0.6)$, $X_2 \sim  N(0, 1)$, $X_3 \sim \text{Gamma}(1, 1)$ and will explicitly be defined to not be time dependent. 
 
 In addition, these three covariates will all affect the critical measures of interest in this study (i.e., treatment, survival time, and censoring time). However, any given measure will only be affected by two of the three covariates and no two measures will be affected by the same combination of covariates.
 
-### 3.2 True Propensity Score Model
+## 3.2 True Propensity Score Model
 
 The true propensity score model will be defined using the following logistic regression, taking in covariates $X_1$ and $X_2$: 
 $$
@@ -245,7 +313,7 @@ patched_ggs <- high_overlap_gg + med_overlap_gg + low_overlap_gg
 patched_ggs + plot_layout(guides = "collect")
 ```
 
-### 3.3 True Survival Time Model
+## 3.3 True Survival Time Model
 
 The true survival time model will be defined using the following Cox-Weibull mode, taking in covariates $X_1$ and $X_3$: 
 $$
@@ -426,7 +494,7 @@ top_out_ggs + plot_layout(guides = "collect") + plot_annotation(title = "Density
 bottom_out_ggs + plot_layout(guides = "collect") + plot_annotation(title = "Density of Survival Time by Treatment\nLow Treatment Effect")
 ```
 
-### 3.4 True Censoring Model
+## 3.4 True Censoring Model
 
 The censoring model will be defined using the following exponential model, taking in covariates $X_2$ and $X_3$, and is generated independently of $T_i^C$, $T_i^S$, and $Z_i$:
 $$
@@ -447,46 +515,23 @@ T^{C}_i=\frac{-\log(u^{C})}{\lambda \exp(K_i)},
 \end{aligned}
 $$
 
-For subject $i$, the observed time, $T^{obs}$ is the minimum of $T_i^C$ and $T_i^S$, or $T^{obs} = \min (T_i^C, T_i^S)$. In addition, the censoring indicator for subject $i$, given the survival time $T_i$ and censoring time $T^C$ will be assigned as follows:
+For subject $i$, the observed time, $T^{obs}$ is the minimum of $T_i^C$ and $T_i^S$, or $T^{obs} = \min (T_i^C, T_i^S)$. In addition, the censoring indicator for subject $i$, given the survival time $T_i$ and censoring time $T^C$, will be assigned as follows:
 $$
 \begin{aligned}
-C_i(T_i^S, T_i^C) = \begin{cases}
+\delta_i(T_i^S, T_i^C) = \begin{cases}
 1, \quad \text{ where }T_i^S > T_i^C
 \\
 0. \quad \text{ where }T_i^S \le T_i^C
 \end{cases}
 \end{aligned}
 $$
-It is critical to note that although $T_i^C$ is by definition independent of $T_i^S$ and $Z_i$, the censoring indication, $C_i$ is not. 
+It is critical to note that although $T_i^C$ is by definition independent of $T_i^S$ and $Z_i$, the censoring indication, $\delta_i$ is not. 
 
-In a similar fashion to how the model intercept was selected in the true propensity score model in order to fix a treatment proportion in expectation, after fixing $\gamma_2 = 2$ and $\gamma_3 = 4$, a numerical search procedure was also run to select a $\gamma_0$ so that the proportion of censored subjects could be varied across two levels, corresponding to low (25%) and high (50%) levels of censoring. These selected intercepts varied according to the magnitude of treatment effect, as well as the defined censoring level, consequentially resulting in four defined $\gamma_0$ values corresponding to the four treatment effect and censoring level categories. These were as follows: $\gamma_0=1.04$ for the high treatment effect with low censoring setting, $\gamma_0=1.2$ for the low treatment effect with low censoring setting, $\gamma_0=3.35$ for the high treatment effect with high censoring setting, and $\gamma_0=3.71$ for the low treatment effect with high censoring setting.
+In a similar fashion to how the model intercept was selected in the true propensity score model in order to fix a treatment proportion in expectation, after fixing $\gamma_2 = 2$ and $\gamma_3 = 4$, a numerical search procedure was also run to select a $\gamma_0$ so that the proportion of censored subjects could be varied across two levels, corresponding to low (25%) and high (50%) levels of censoring. The selected intercepts varied according to the magnitude of treatment effect, as well as the defined censoring level, consequentially resulting in four defined $\gamma_0$ values corresponding to the four treatment effect and censoring level categories. These were as follows: $\gamma_0=1.04$ for the high treatment effect with low censoring setting, $\gamma_0=1.2$ for the low treatment effect with low censoring setting, $\gamma_0=3.35$ for the high treatment effect with high censoring setting, and $\gamma_0=3.71$ for the low treatment effect with high censoring setting.
 
-# 4. Analysis
+# 4. Results
 
 ## 4.1 Separate Weighting
-
-```{tikz, echo = FALSE}
-\tikzstyle{block} = [rectangle, draw, text width=6em, text centered, rounded corners, minimum height=4em]
-\tikzstyle{calculation} = [circle, draw, text width=4em, text centered, minimum height=4em]
-\tikzstyle{result} = [rectangle, draw, text width=7em, text centered, minimum height=4em]
-
-\tikzstyle{line} = [draw, -latex]
-\tikzstyle{doublearr}=[latex-latex, black, line width=0.5pt]
-  \begin{tikzpicture}[auto]
-      % Place nodes
-      \node [block] (D) {Observed Data};
-      \node [calculation, right of = D, xshift = 2cm, yshift = 1cm] (IPTW) {IPTW};
-      \node [calculation, right of = D, xshift = 2cm, yshift = -1cm] (IPCW) {IPCW};
-      \node [block, right of = D, xshift = 5cm] (WD) {IPTW $\times$ IPCW*};
-      \node [block, text width = 3cm, right of = WD, xshift = 3cm] (EY) {$\hat{E}[S(1) - S(0)]$};
-      % Draw edges
-      \path [line] (D) -- (IPTW);
-      \path [line] (D) -- (IPCW);
-      \path [line] (IPTW) -- (WD);
-      \path [line] (IPCW) -- (WD);
-      \path [line] (WD) -- (EY);
-  \end{tikzpicture}
-```
 
 We summarized the mean of estimated causal estimand, relative bias and $95\%$ coverage rate from the simulation for separate weighting procedure in Table 1. When using logistic regression to estimate both IPTW and IPCW, we observed smaller relative bias and higher $95\%$ coverage rate among low censoring scenarios regardless of overlap and treatment effect settings. The high overlap scenarios were also observed associated with higher $95\%$ coverage rate. However, such a pattern was not obvious when using Cox model to estimate IPCW. We also checked covariate balancing by computing absolute standardized difference (ASD) and reported the results in table 2. Contrary to table 1, the performance of the method using logistic regression for IPTW and Cox model for IPCW was better than the model of dual logistic regression in terms of balancing baseline covariates.
 
@@ -498,7 +543,14 @@ table1_to_kable <-
   as_tibble() %>%
   janitor::clean_names() %>%
   mutate(
-    all_v1 = round(as.numeric(all_v1), 4)
+    all_v1 = round(as.numeric(all_v1), 4),
+    scenario =
+      case_when(
+        true_ace == 0.014 & scenario == "High/High/High" ~ "High/Low/High",
+        true_ace == 0.014 & scenario == "Med/High/High" ~ "Med/Low/High",
+        true_ace == 0.014 & scenario == "Low/High/High" ~ "Low/Low/High",
+        TRUE ~ scenario
+      )
   ) 
 
 table1_to_kable %>%
@@ -509,7 +561,7 @@ table1_to_kable %>%
   ) %>%
   janitor::clean_names() %>%
   knitr::kable(
-    col.names = c("Scenario*",
+    col.names = c("Scenario$^\\text{a}$",
                   "True ACE",
                   "Avg. Estimate",
                   "Relative Bias",
@@ -546,20 +598,20 @@ table2_to_kable %>%
   janitor::clean_names() %>%
   unnest(x1_asd_raw:x3_asd_wt2) %>%
   knitr::kable(
-    col.names = linebreak(c("Scenario*",
-                  "Unweighted\nASD",
-                  "Dual Logistic\nWeighted ASD",
-                  "Logistic/Cox\nWeighted ASD",
-                  "Unweighted\nASD",
-                  "Dual Logistic\nWeighted ASD",
-                  "Logistic/Cox\nWeighted ASD",
-                  "Unweighted\nASD",
-                  "Dual Logistic\nWeighted ASD",
-                  "Logistic/Cox\nWeighted ASD"
+    col.names = linebreak(c("Scenario$^\\text{a}$",
+                  "Unweighted",
+                  "Dual Logistic",
+                  "Logistic/Cox",
+                  "Unweighted",
+                  "Dual Logistic",
+                  "Logistic/Cox",
+                  "Unweighted",
+                  "Dual Logistic",
+                  "Logistic/Cox"
                   ), align="r"),
       booktabs=TRUE,
     escape=FALSE,
-     caption = "Separate Weighting Covariate Balance Results"
+     caption = "Separate Weighting Covariate Balance Results (ASD)"
   )%>%
   kable_styling(latex_options = c("HOLD_position", "scale_down")) %>% 
   add_header_above(c(" " = 1, "X1" = 3, "X2"=3, "X3" = 3), escape = FALSE) %>%
@@ -568,45 +620,6 @@ table2_to_kable %>%
 
 ## 4.2 Sequential Weighting
 
-```{tikz, echo = FALSE}
-\tikzstyle{block} = [rectangle, draw, text width=6em, text centered, rounded corners, minimum height=4em]
-\tikzstyle{calculation} = [circle, draw, text width=4em, text centered, minimum height=4em]
-\tikzstyle{result} = [rectangle, draw, text width=7em, text centered, minimum height=4em]
-
-\tikzstyle{line} = [draw, -latex]
-\tikzstyle{doublearr}=[latex-latex, black, line width=0.5pt]
-  \begin{tikzpicture}[auto]
-      % Place nodes
-      \node [block] (D) {Observed Data};
-      \node [calculation, right of = D, xshift = 1.5cm] (IPTW) {IPTW};
-      \node [block, right of = IPTW, xshift = 1.5cm] (WD1) {IPTW*};
-      \node [calculation, right of = WD1, xshift = 1.5cm] (IPCW) {IPCW};
-      \node [block, right of = IPCW, xshift = 1.5cm] (WD2) {IPCW $\circ$ IPTW*};
-      \node [block, text width = 3cm, right of = WD2, xshift = 2.5cm] (EY) {$\hat{E}[S(1) - S(0)]$};
-
-      % second set of nodes
-
-      \node [block, below of = D, yshift = 4cm] (DR) {Observed Data};
-      \node [calculation, right of = DR, xshift = 1.5cm] (IPCWR) {IPCW};
-      \node [block, right of = IPCWR, xshift = 1.5cm] (WD1R) {IPCW*};
-      \node [calculation, right of = WD1R, xshift = 1.5cm] (IPTWR) {IPTW};
-      \node [block, right of = IPTWR, xshift = 1.5cm] (WD2R) {IPTW $\circ$ IPCW*};
-      \node [block, text width = 3cm, right of = WD2R, xshift = 2.5cm] (EYR) {$\hat{E}[S(1) - S(0)]$};
-
-  % Draw edges
-      \path [line] (D) -- (IPTW);
-      \path [line] (IPTW) -- (WD1);
-      \path [line] (WD1) -- (IPCW);
-      \path [line] (IPCW) -- (WD2);
-      \path [line] (WD2) -- (EY);
-
-      \path [line] (DR) -- (IPCWR);
-      \path [line] (IPCWR) -- (WD1R);
-      \path [line] (WD1R) -- (IPTWR);
-      \path [line] (IPTWR) -- (WD2R);
-      \path [line] (WD2R) -- (EYR);
-  \end{tikzpicture}
-```
 
 ```{r}
 seq_weights_res <- read_csv(file = "fin_res_sum.csv") %>%
@@ -615,6 +628,7 @@ seq_weights_res <- read_csv(file = "fin_res_sum.csv") %>%
   relocate(
     scenario, true_ace
   )
+
 seq_weights_res %>% 
   select(
     scenario, true_ace, 
@@ -633,7 +647,7 @@ seq_weights_res %>%
   ) %>%
   knitr::kable(
     col.names = c(
-      "Scenario*", "True ACE",
+      "Scenario$^\\text{a}$", "True ACE",
       "Avg. Estimate",
       "Relative Bias",
       "95\\% Coverage Rate",
@@ -650,12 +664,79 @@ seq_weights_res %>%
 ```
 
 
+```{r}
+seq_weights_asd <- read_csv(file = "fin_asd_sum.csv") %>%
+  select(-scenario) %>%
+  bind_cols(table1_to_kable %>% select(scenario) %>% unique()) %>%
+  relocate(
+    scenario
+  )
 
-# 5. Results
+seq_weights_asd %>% 
+  select(
+    scenario, 
+    x1_none,
+    x1_iptw_ipcw,
+    x1_ipcw_iptw,
+    x2_none,
+    x2_iptw_ipcw,
+    x2_ipcw_iptw,
+    x3_none,
+    x3_iptw_ipcw,
+    x3_ipcw_iptw
+  ) %>%
+  mutate(
+    x1_none = round(x1_none, 4),
+    x1_iptw_ipcw = round(x1_iptw_ipcw, 4),
+    x1_ipcw_iptw = round(x1_ipcw_iptw, 4),
+    x2_none = round(x2_none, 4),
+    x2_iptw_ipcw = round(x2_iptw_ipcw, 4),
+    x2_ipcw_iptw = round(x2_ipcw_iptw, 4),
+    x3_none = round(x3_none, 4),
+    x3_iptw_ipcw = round(x3_iptw_ipcw, 4),
+    x3_ipcw_iptw = round(x3_ipcw_iptw, 4)
+  ) %>%
+  knitr::kable(
+    col.names = linebreak(c(
+      "Scenario$^\\text{a}$", 
+      "Unweighted",
+      "IPTW*IPCW",
+      "IPCW*IPTW",
+      "Unweighted",
+      "IPTW*IPCW",
+      "IPCW*IPTW",
+      "Unweighted",
+      "IPTW*IPCW",
+      "IPCW*IPTW"),
+    align="r"),
+    booktabs=TRUE,
+    escape=FALSE,
+    caption = "Sequential Weighting Covariate Balance Results (ASD)"
+  )%>%
+  kable_styling(latex_options = c("HOLD_position", "scale_down")) %>% 
+  add_header_above(c(" " = 1, "X1" = 3, "X2"= 3, "X3" = 3), escape = FALSE) %>%
+  add_footnote(c("Note: scenarios are described by (degree of overlap/treatment effect level/censoring level)"))
+```
 
 
 
-# 6. Discussion
+# 5. Discussion
 
 
+\newpage
+# 6. References
+
+Mao, H., Li, L., Yang, W., & Shen, Y. (2018). On the propensity score weighting analysis with survival outcome: Estimands, estimation, and inference. Statistics in medicine, 37(26), 3745-3763.
+
+Cheng, C., Li, F., Thomas, L. E., & Li, F. (2022). Addressing extreme propensity scores in estimating counterfactual survival functions via the overlap weights. American journal of epidemiology, 191(6), 1140-1151.
+
+Robins, J. M., Hernán, M. A., & Brumback, B. (2000). Marginal structural models and causal inference in epidemiology. Epidemiology (Cambridge, Mass.), 11(5), 550–560. https://doi.org/10.1097/00001648-200009000-00011
+
+Andersen, P. K., & Perme, M. P. (2010). Pseudo-observations in survival analysis. Statistical Methods in Medical Research, 19(1), 71-99. 10.1177/0962280209105020
+
+Zeng, S., Li, F., & Hu, L. (2021). Propensity score weighting analysis of survival outcomes using pseudo-observations. arXiv preprint arXiv:2103.00605.
+
+Wang, C., Wei, K., Huang, C., Yu, Y., & Qin, G. (2023). Multiply robust estimator for the difference in survival functions using pseudo-observations. BMC medical research methodology, 23(1), 247. https://doi.org/10.1186/s12874-023-02065-6
+
+Bender R, Augustin T and Blettner M. (2005). Generating survival times to simulate cox proportional hazards models. Statistics in Medicine; 24: 1713–1723. https://doi.org/10.1002/sim.2059.
 
