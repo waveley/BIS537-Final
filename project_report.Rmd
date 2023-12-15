@@ -726,6 +726,64 @@ table1_to_kable %>%
   add_footnote(c("Note: scenarios are described by (degree of overlap/treatment effect level/censoring level)"))
 ```
 
+```{r, fig.width = 8, fig.height = 1}
+to_seq_bias_gg <- 
+  table1_to_kable %>%
+  select(scenario, measure, all_v1, v1) %>%
+  mutate(
+    name = case_when(
+      v1 == "Duel Logistic" ~ "Dual Logistic",
+      v1 == "Logistic Cox" ~ "Logistic/Cox"
+    ),
+    value = all_v1
+  ) %>%
+  filter(measure == "Relative Bias")
+  
+
+to_seq_coverage_gg <- 
+  table1_to_kable %>%
+  select(scenario, measure, all_v1, v1) %>%
+  mutate(
+    name = case_when(
+      v1 == "Duel Logistic" ~ "Dual Logistic",
+      v1 == "Logistic Cox" ~ "Logistic/Cox"
+    ),
+    value = all_v1
+  ) %>%
+  filter(measure == "95% Coverage")
+
+bias_gg_1 <- 
+  to_seq_bias_gg %>%
+  ggplot(
+    aes(x = scenario, 
+    y = value,
+    col = name,
+    group = name)
+  ) +
+  labs(x = "Scenario", y = "Relative Bias", col = "Weighting Procedure", title = "Relative Bias") +
+  geom_hline(yintercept = 0, col="red", linetype="dashed") +
+  geom_point() + 
+  geom_line() + 
+  coord_flip()
+
+coverage_gg <- 
+  to_seq_coverage_gg %>%
+  ggplot(
+    aes(x = scenario, 
+    y = value,
+    col = name,
+    group = name)
+  ) +
+  labs(x = "Scenario", y = "95% Coverage Rate", col = "Weighting Procedure", title = "95% Coverage Rates") +
+  geom_hline(yintercept = 0.95, col="red", linetype="dashed") +
+  geom_point() + 
+  geom_line() + 
+  coord_flip()
+
+(bias_gg_1 + coverage_gg) + plot_layout(guides = "collect") + plot_annotation(title = "Bias and 95% Coverage by Scenario and Weighting Procedure\nSeparate Weighting Procedures")
+```
+
+
 
 ## 4.2 Sequential Weighting
 
@@ -851,10 +909,12 @@ asd_gg_3 <-
   geom_line() + 
   coord_flip()
   
-(asd_gg_1 + asd_gg_2 + asd_gg_3) + plot_layout(guides = "collect") + plot_annotation(title = "ASD by Scenario and Weighting Procedure\nSequentials Weighting Procedures")
+(asd_gg_1 + asd_gg_2 + asd_gg_3) + plot_layout(guides = "collect") + plot_annotation(title = "ASD by Scenario and Weighting Procedure\nSequential Weighting Procedures")
 ```
 
-It is apparent that there is improvement across most simulation settings in covariate balance in the IPTW$\circ$IPCW weighting method over the unweighted observed data in covariates $X_1$ and $X_2$. This is not the case for the IPCW$\circ$IPTW weighting method, however, as some ASD measures are even larger than what is observable in the 
+It is apparent that there is improvement across all simulation settings in covariate balance in the IPTW$\circ$IPCW weighting method over the unweighted observed data in covariates $X_1$ and $X_2$, though this is not the case in $X_3$. We note that the covariate balance improved for most cases through the IPCW$\circ$IPTW weighting method over the unweighted observed data in $X_1$ and $X_2$, with the exclusion of the high-overlap settings, and see extreme imbalance in $X_3$. 
+
+Now, we will assess the results under these two weighting procedures:
 
 ```{r}
 seq_weights_res <- read_csv(file = "fin_res_sum.csv") %>%
@@ -896,6 +956,65 @@ seq_weights_res %>%
   kable_styling(latex_options = c("HOLD_position", "scale_down")) %>% 
   add_header_above(c(" " = 2, "IPTW$\\circ$IPCW" = 3, "IPCW$\\circ$IPTW"= 3), escape = FALSE) %>%
   add_footnote(c("Averaged over 1000 total bootstrapped replicates (100 bootstrap replicates over each of 100 samples)", "Note: scenarios are described by (degree of overlap/treatment effect level/censoring level)"))
+```
+
+
+```{r, fig.height = 1, fig.width = 8}
+to_seq_bias_gg <- 
+  seq_weights_res %>%
+  select(scenario, relative_bias_trt_cens_adj_km, relative_bias_cens_trt_adj_km) %>%
+  pivot_longer(
+    cols = c(relative_bias_trt_cens_adj_km, relative_bias_cens_trt_adj_km)
+  ) %>%
+  mutate(
+    name = case_when(
+      name == "relative_bias_trt_cens_adj_km" ~ "IPTW*IPCW",
+      name == "relative_bias_cens_trt_adj_km" ~ "IPCW*IPTW"
+    )
+  ) 
+
+to_seq_coverage_gg <- 
+  seq_weights_res %>%
+  select(scenario, coverage_prop_trt_cens_adj_km, coverage_prop_cens_trt_adj_km) %>%
+  pivot_longer(
+    cols = c(coverage_prop_trt_cens_adj_km, coverage_prop_cens_trt_adj_km)
+  ) %>%
+  mutate(
+    name = case_when(
+      name == "coverage_prop_trt_cens_adj_km" ~ "IPTW*IPCW",
+      name == "coverage_prop_cens_trt_adj_km" ~ "IPCW*IPTW"
+    )
+  ) 
+
+bias_gg_1 <- 
+  to_seq_bias_gg %>%
+  ggplot(
+    aes(x = scenario, 
+    y = value,
+    col = name,
+    group = name)
+  ) +
+  labs(x = "Scenario", y = "Relative Bias", col = "Weighting Procedure", title = "Relative Bias") +
+  geom_hline(yintercept = 0, col="red", linetype="dashed") +
+  geom_point() + 
+  geom_line() + 
+  coord_flip()
+
+coverage_gg <- 
+  to_seq_coverage_gg %>%
+  ggplot(
+    aes(x = scenario, 
+    y = value,
+    col = name,
+    group = name)
+  ) +
+  labs(x = "Scenario", y = "95% Coverage Rate", col = "Weighting Procedure", title = "95% Coverage Rates") +
+  geom_hline(yintercept = 0.95, col="red", linetype="dashed") +
+  geom_point() + 
+  geom_line() + 
+  coord_flip()
+
+(bias_gg_1 + coverage_gg) + plot_layout(guides = "collect") + plot_annotation(title = "Bias and 95% Coverage by Scenario and Weighting Procedure\nSequentials Weighting Procedures")
 ```
 
 # 5. Discussion
