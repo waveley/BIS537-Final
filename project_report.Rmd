@@ -900,6 +900,9 @@ seq_weights_res %>%
 
 # 5. Discussion
 
+In this project, we conducted a simulation studies to evaluate the performances of two weighting schemes under causal survival analysis framework. We specified 12 simulation scenarios which took different treatment effects, overlaps of covariates distribution, and censoring rates into consideration. Trends in the separate weighting procedure with logistic regressions for both IPTW and IPCW match what we expected, where we observed lower overlap and higher censoring rates scenarios corresponded with lower coverage rates. In addition, this procedure performed better in lower censoring settings than higher censoring counterparts. However, when using $ipcw()$ to calculate IPCW with Cox model, we found increases in relative bias and decreases in the coverage rates. For sequential weighting procedure, there were no clear trends in the sequential weighting procedure, where most of the relative bias ranged around $10\%$ to $20\%$ and most of the coverage rates were above $90\%$.  
+
+However, the relative bias is, in general, lower than what we expected, which may be attributed to the following reasons. First of all, all the weighting models in our analysis were misspecified, because we tried to mimic the real world situation in which no one knew the true models. Secondly, due to the time constraint we didn't validate the $ipcw()$ function when using it, which may cause a mistaken usage of it.    
 
 \newpage
 # 6. References
