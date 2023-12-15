@@ -71,7 +71,7 @@ Several procedures addressing this dual-level missing data issue in the estimati
 
 In this study, we are interested in revisiting the weighting methods and are proposing a new procedure in which model misspecification may be implicitly adjusted for. In doing so, we will first employ the two-arm weighting method established by Cheng et.al (2022), in which weights based on the probability of treatment and the probability of censoring are calculated and used together in estimating the causal estimand of interest. We will then compare its performance to the results obtained from a single-arm sequential weighting method that we have developed, where weights are constructed iteratively, and the final compositely-weighted dataset will then be used to estimate the causal estimand.
 
-The remainder of this report is organized as follows: in section 2, we introduce our causal survival estimand; in section 3, we discuss our simulation design; in section 4, we illustrate our results from simulation study; and section 5 concludes with a discussion.
+The remainder of this paper is organized as follows: in section 2, we introduce the methods developed and utilized in this study; in section 3, we discuss our data generation procedure and simulation design; in section 4, we illustrate our results from the conducted simulation study; and section 5 concludes with a discussion.
 
 # 2. Methods
 
@@ -168,7 +168,7 @@ The first weighting procedure is to estimate IPTW and IPCW separately. Then the 
       \node [calculation, right of = D, xshift = 2cm, yshift = 1cm] (IPTW) {IPTW};
       \node [calculation, right of = D, xshift = 2cm, yshift = -1cm] (IPCW) {IPCW};
       \node [block, right of = D, xshift = 5cm] (WD) {IPTW $\times$ IPCW*};
-      \node [block, text width = 3cm, right of = WD, xshift = 3cm] (EY) {$\hat{E}[S(1) - S(0)]$};
+      \node [block, text width = 3cm, right of = WD, xshift = 3cm] (EY) {$\hat{E}[S_1(5) - S_0(5)]$};
       % Draw edges
       \path [line] (D) -- (IPTW);
       \path [line] (D) -- (IPCW);
@@ -200,7 +200,7 @@ The weighting processes were conducted as depicted in the following diagram, whe
       \node [block, right of = IPTW, xshift = 1.5cm] (WD1) {IPTW*};
       \node [calculation, right of = WD1, xshift = 1.5cm] (IPCW) {IPCW};
       \node [block, right of = IPCW, xshift = 1.5cm] (WD2) {IPCW $\circ$ IPTW*};
-      \node [block, text width = 3cm, right of = WD2, xshift = 2.5cm] (EY) {$\hat{E}[S(1) - S(0)]$};
+      \node [block, text width = 3cm, right of = WD2, xshift = 2.5cm] (EY) {$\hat{E}[S_1(5) - S_0(5)]$};
 
       % second set of nodes
 
@@ -209,7 +209,7 @@ The weighting processes were conducted as depicted in the following diagram, whe
       \node [block, right of = IPCWR, xshift = 1.5cm] (WD1R) {IPCW*};
       \node [calculation, right of = WD1R, xshift = 1.5cm] (IPTWR) {IPTW};
       \node [block, right of = IPTWR, xshift = 1.5cm] (WD2R) {IPTW $\circ$ IPCW*};
-      \node [block, text width = 3cm, right of = WD2R, xshift = 2.5cm] (EYR) {$\hat{E}[S(1) - S(0)]$};
+      \node [block, text width = 3cm, right of = WD2R, xshift = 2.5cm] (EYR) {$\hat{E}[S_1(5) - S_0(5)]$};
 
   % Draw edges
       \path [line] (D) -- (IPTW);
