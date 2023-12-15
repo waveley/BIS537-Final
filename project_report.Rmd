@@ -130,6 +130,11 @@ $$
 
 where $\omega_{IPTW\circ IPCW_i}$ is the composite treatment and censoring weight and all other notation is the same as defined previously.
 
+## 2.3 Weighting Procedures (expand)
+
+We estimated IPTW using logistic regression with covariates $X_1$, $X_2$, and $X_3$. In separate weighting procedure, we used both logistic regression and Exponential-Cox model with covariates $X_1$, $X_2$, and $X_3$ to estimate IPCW. All simulations and analyses were conducted in R. The logistic regressions were fitted using $glm()$ function and Cox model using $ipcw()$ from $RiskRegression$ R package.
+
+
 ## 3. Data Generation
 
 We will generate data in accordance with the following relationships, and the causal effect of interest is highlighted in red:
@@ -454,7 +459,7 @@ C_i(T_i^S, T_i^C) = \begin{cases}
 $$
 It is critical to note that although $T_i^C$ is by definition independent of $T_i^S$ and $Z_i$, the censoring indication, $C_i$ is not. 
 
-In a similar fashion to how the model intercept was selected in the true propensity score model in order to fix a treatment proportion in expectation, after fixing $\gamma_2 = 2$ and $\gamma_3 = 4$, a numerical search procedure was also run to select a $\gamma_0$ so that the proportion of censored subjects could be varied across two levels, corresponding to low (25%) and high (50%) levels of censoring. These selected intercepts varied according to the magnitude of treatment effect, as well as the defined censoring level, consequentially resulting in four defined $\gamma_0$ values corresponding to the four treatment effect and censoring level categories.
+In a similar fashion to how the model intercept was selected in the true propensity score model in order to fix a treatment proportion in expectation, after fixing $\gamma_2 = 2$ and $\gamma_3 = 4$, a numerical search procedure was also run to select a $\gamma_0$ so that the proportion of censored subjects could be varied across two levels, corresponding to low (25%) and high (50%) levels of censoring. These selected intercepts varied according to the magnitude of treatment effect, as well as the defined censoring level, consequentially resulting in four defined $\gamma_0$ values corresponding to the four treatment effect and censoring level categories. These were as follows: $\gamma_0=1.04$ for the high treatment effect with low censoring setting, $\gamma_0=1.2$ for the low treatment effect with low censoring setting, $\gamma_0=3.35$ for the high treatment effect with high censoring setting, and $\gamma_0=3.71$ for the low treatment effect with high censoring setting.
 
 # 4. Analysis
 
@@ -481,6 +486,80 @@ In a similar fashion to how the model intercept was selected in the true propens
       \path [line] (IPCW) -- (WD);
       \path [line] (WD) -- (EY);
   \end{tikzpicture}
+```
+
+We summarized the mean of estimated causal estimand, relative bias and $95\%$ coverage rate from the simulation for separate weighting procedure in Table 1. When using logistic regression to estimate both IPTW and IPCW, we observed smaller relative bias and higher $95\%$ coverage rate among low censoring scenarios regardless of overlap and treatment effect settings. The high overlap scenarios were also observed associated with higher $95\%$ coverage rate. However, such a pattern was not obvious when using Cox model to estimate IPCW. We also checked covaraites balancing by computing absolute standardized difference (ASD) and reported the results in table 2. Contrary to table 1, the performance of the method using logistic regression for IPTW and Cox model for IPCW was better than the model of dual logistic regression in terms of balancing baseline covariates.
+
+```{r}
+library(kableExtra)
+load("table1.RData")
+table1_to_kable <-
+  table1 %>% 
+  as_tibble() %>%
+  janitor::clean_names() %>%
+  mutate(
+    all_v1 = round(as.numeric(all_v1), 4)
+  ) 
+
+table1_to_kable %>%
+  group_by(scenario, true_ace) %>%
+  pivot_wider(
+    names_from = c(v1, measure),
+    values_from = all_v1
+  ) %>%
+  janitor::clean_names() %>%
+  knitr::kable(
+    col.names = c("Scenario\n(Overlap/Treatment Effect/Censoring)",
+                  "True ACE",
+                  "Avg. Estimate",
+                  "Relative Bias",
+                  "95\\% Coverage Rate",
+                  "Avg. Estimate",
+                  "Relative Bias",
+                  "95\\% Coverage Rate"
+                  ),
+      booktabs=TRUE,
+    escape=FALSE
+  )%>%
+  kable_styling(latex_options = c("HOLD_position", "scale_down")) %>% 
+  add_header_above(c(" " = 2, "Dual Logistic" = 3, "Logistic/Cox"=3), escape = FALSE)
+```
+
+```{r}
+load("table2.RData")
+table2_to_kable <-
+  table2 %>% 
+  as_tibble() %>%
+  janitor::clean_names() %>%
+  mutate(
+    asd_all = round(as.numeric(asd_all), 4)
+  ) 
+
+table2_to_kable %>%
+  group_by(scenario_asd) %>%
+  pivot_wider(
+    names_from = names,
+    values_from = asd_all
+  ) %>%
+  janitor::clean_names() %>%
+  unnest(x1_asd_raw:x3_asd_wt2) %>%
+  knitr::kable(
+    col.names = c("Scenario\n(Overlap/Treatment Effect/Censoring)",
+                  "Unweighted ASD",
+                  "Dual Logistic Weighted ASD",
+                  "Logistic/Cox Weighted ASD",
+                  "Unweighted ASD",
+                  "Dual Logistic Weighted ASD",
+                  "Logistic/Cox Weighted ASD",
+                  "Unweighted ASD",
+                  "Dual Logistic Weighted ASD",
+                  "Logistic/Cox Weighted ASD"
+                  ),
+      booktabs=TRUE,
+    escape=FALSE
+  )%>%
+  kable_styling(latex_options = c("HOLD_position", "scale_down")) %>% 
+  add_header_above(c(" " = 1, "X1" = 3, "X2"=3, "X3" = 3), escape = FALSE)
 ```
 
 ## 4.2 Sequential Weighting
@@ -524,6 +603,47 @@ In a similar fashion to how the model intercept was selected in the true propens
       \path [line] (WD2R) -- (EYR);
   \end{tikzpicture}
 ```
+
+```{r}
+seq_weights_res <- read_csv(file = "fin_res_sum.csv") %>%
+  select(-scenario) %>%
+  bind_cols(table1_to_kable %>% select(scenario, true_ace) %>% unique()) %>%
+  relocate(
+    scenario, true_ace
+  )
+seq_weights_res %>% 
+  select(
+    scenario, true_ace, 
+    avg_te_trt_cens_adj_km,
+    relative_bias_trt_cens_adj_km,
+    coverage_prop_trt_cens_adj_km,
+    avg_te_cens_trt_adj_km,
+    relative_bias_cens_trt_adj_km,
+    coverage_prop_cens_trt_adj_km
+  ) %>%
+  mutate(
+    avg_te_trt_cens_adj_km = round(avg_te_trt_cens_adj_km, 4),
+    relative_bias_trt_cens_adj_km = round(relative_bias_trt_cens_adj_km, 4),
+    avg_te_cens_trt_adj_km = round(avg_te_cens_trt_adj_km, 4),
+    relative_bias_cens_trt_adj_km = round(relative_bias_cens_trt_adj_km, 4)
+  ) %>%
+  knitr::kable(
+    col.names = c(
+      "Scenario\n(Overlap/Treatment Effect/Censoring)", "True ACE",
+      "Avg. Estimate",
+      "Relative Bias",
+      "95\\% Coverage Rate",
+      "Avg. Estimate",
+      "Relative Bias",
+      "95\\% Coverage Rate"),
+    booktabs=TRUE,
+    escape=FALSE
+  )%>%
+  kable_styling(latex_options = c("HOLD_position", "scale_down")) %>% 
+  add_header_above(c(" " = 2, "IPTW*IPCW" = 3, "IPCW*IPTW"= 3), escape = FALSE)
+```
+
+
 
 # 5. Results
 
