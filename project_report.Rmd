@@ -281,7 +281,7 @@ g^{-1}(E[Z = 1 | \mathbf{X}_i]) = \beta_0 + \beta_1 X_{1i} + \beta_2 X_{2i},
 \end{aligned}
 $$
 
-In our simulation, $\beta_1, \beta_2$ will be held fixed at $\beta_1 = \beta_2 = 0.1$ for the setting of high overlap of overlap, $\beta_1 = \beta_2 = 1$ for the setting of medium overlap, and $\beta_1 = \beta_2  = 3$ for the setting of low overlap. For each of these settings, the $\beta_0$ that would produce an expected treatment proportion of 55% will be obtained through a numerical search over an interval.
+In our simulation, $\beta_1, \beta_2$ was held fixed at $\beta_1 = \beta_2 = 0.1$ for the setting of high overlap of overlap, $\beta_1 = \beta_2 = 1$ for the setting of medium overlap, and $\beta_1 = \beta_2  = 3$ for the setting of low overlap. For each of these settings, the $\beta_0$ that would produce an expected treatment proportion of 55% was be obtained through a numerical search over an interval.
 
 ```{r}
 source(file = "misc_functions.R")
@@ -918,6 +918,8 @@ asd_gg_3 <-
 
 It is apparent that there is improvement across all simulation settings in covariate balance in the IPTW$\circ$IPCW weighting method over the unweighted observed data in covariates $X_1$ and $X_2$, though this is not the case in $X_3$. We note that the covariate balance improved for most cases through the IPCW$\circ$IPTW weighting method over the unweighted observed data in $X_1$ and $X_2$, with the exclusion of the high-overlap settings, but the improvement was not as large as the IPTW$\circ$IPCW procedure. In addition, there was greater imbalance in $X_3$ in the IPCW$\circ$IPTW procedure than both the IPTW$\circ$IPCW and unweighted procedures. 
 
+This phenomena may suggest that in terms of covariate balance, the first step of weighting in the sequential weighting procedure may dominate the second set of weights. If this is an accurate conclusion, it is understandable why the covariate balance between treatment groups when first weighting on censoring indication is not as good as the covariate balance between treatment groups when first weighting on treatment, because the distribution of covariates between censoring groups is likely not the same (and in this study is defined to be different) as the distribution of covariates between treatment groups. 
+
 Now, we will assess the results under these two weighting procedures:
 
 ```{r}
@@ -1036,12 +1038,18 @@ In addition, it was interesting to see that the separate weighting procedures se
 
 # 5. Discussion
 
-In this project, we conducted a simulation studies to evaluate the performances of two weighting schemes under causal survival analysis framework. We specified 12 simulation scenarios which took different treatment effects, overlaps of covariates distribution, and censoring rates into consideration. Trends in the separate weighting procedure with logistic regressions for both IPTW and IPCW match what we expected, where we observed lower overlap and higher censoring rates scenarios corresponded with lower coverage rates. In addition, this procedure performed better in lower censoring settings than higher censoring counterparts. However, when using `ipcw` to calculate IPCW with Cox model, we found increases in relative bias and decreases in the coverage rates. For sequential weighting procedure, there were no clear trends in the sequential weighting procedure, where most of the relative bias ranged around 10% to 20% and most of the coverage rates were above 90%.  
+The results that were obtained through this simulation study were interesting and may compel further inquiry. 
 
-However, the relative bias is, in general, lower than what we expected, which may be attributed to the following reasons. First of all, all the weighting models in our analysis were misspecified, because we tried to mimic the real world situation in which no one knew the true models. Secondly, due to the time constraint we didn't validate the `ipcw` function when using it, which may cause a mistaken usage of it.    
+The separate weighting procedures involving logistic regressions for both propensity score models performed in ways that matched prior expectations, where scenarios with lower overlap and higher censoring rates scenarios corresponded with lower coverage rates and performance was better overall in lower censoring settings than higher censoring counterparts. However, these results may also prompt further investigation into the inner workings of the `ipcw` function from the `riskRegression` package, as results produced utilizing IPCWs generated from the Cox-Exponential model, were associated with increases in relative bias and decreases in the coverage rates. The sequential weighting procedures both produced 95% coverage rates that were much higher than expected. The covariate balance that was achieved by the IPTW$\circ$IPCW weighting procedure was quite impressive, though it was intriguing that such balance was still associated with large relative biases. 
+
+While we are inclined to recommend the sequential IPTW$\circ$IPCW for use, on the basis of improved covariate balance and most optimal 95% coverage rates, there are still a number of questions that would necessitate further investigation prior to the employment of such an estimation schematic. First, we recognize the great limitation in our study that a comparative analysis with correctly specified propensity score models was not conducted, and thus the impact of model misspecification on these causal estimates is not yet quantifiable. We hypothesize that a correctly specified propensity score model would decrease the relative biases that were observed in all scenarios, as it was known that one of the covariates included in every propensity score model was explicitly defined to have no prognostic influence on the indicator of interest. Additionally, due to computational limitations, it may be that the number of simulations that were run were still not sufficient in approximating the long-run behavior of any of these estimators -- it would be our recommendation to increase both the sample size and simulation replicate size in subsequent studies to obtain a more complete understanding of the behavior of these procedures and estimators. In the conduct of future simulation studies, we would also recommend varying and adding granularity to the scenario parameters that we used. Finally, as the focus of this study was the restricted average causal estimand, which was estimated by the non-parametric KM estimator, we would recommend investigation into the behavior, or even the application of, these weighting procedures in the setting of other causal estimands and estimators. 
+
+# 6. Github Repository
+
+All code for this study can be found at the following GitHub repository: https://github.com/waveley/BIS537-Final.
 
 \newpage
-# 6. References
+# 7. References
 
 Mao, H., Li, L., Yang, W., & Shen, Y. (2018). On the propensity score weighting analysis with survival outcome: Estimands, estimation, and inference. Statistics in medicine, 37(26), 3745-3763.
 
