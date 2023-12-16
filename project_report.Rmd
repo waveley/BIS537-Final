@@ -63,11 +63,9 @@ scale_fill_discrete   = scale_fill_viridis_d
 
 # 1. Introduction
 
-While the ideal setting to conduct causal inference on survival outcomes are randomized experiments, as is true for most areas of research, it is often the case that such an experimental setting is difficult or impossible to achieve. As such, when treatment and control groups are not exchangeable, it may be necessary to implement causal inference methods to address the absence of direct counterfactual proxies.
+Time-to-event outcomes are of great interest to investigators across a variety of clinical settings, however present analytical difficulties even within the constrains of a randomized controlled trial. In particular, censoring, which is the non-observation of an event yet loss of a subject's data, presents another missing data issue that the investigator has need to consider. This issue is compounded in the setting of a non-randomized or observational study, where exchangeability between treatment groups cannot be assumed of the collected data, and the researcher is left with a complex dual-level missing data issue to reckon with.
 
-Time-to-event outcomes are of great interest to investigators across a variety of clinical settings, however present analytical difficulties even within the constrains of a randomized controlled trial. In particular, the non-observation of an event yet loss of a subject's data, or censoring, presents another missing data issue that the investigator has need to consider. This issue is compounded in the setting of a non-randomized or observational study, where exchangeability between treatment groups cannot be assumed of the collected data.
-
-Several procedures addressing this dual-level missing data issue in the estimation of time-to-event causal effects have been explored previously. Some of these procedures extend the idea of inverse probability weighting to the setting of survival analysis in constructing a combined treatment and censoring weights (Hernan 2000, Cheng 2022) to approximate exchangeability and estimating the causal estimand through a weighted estimator. Other methods approach the problem by obtaining survival outcomes for each subject through a jackknife procedure (Andersen 2010) and estimate the causal estimand based on those pseudo-observed endpoints. The pseudo-observaions approach has been further improved upon with the employment of propensity score weighting to close the distance between the collected sample and the target population (Li 2021) as well as with the recent proposal of a doubly-robust estimation technique (Wang 2023) to allow for some flexibility with regards to model misspecification. 
+Several procedures addressing these two missing data issues in the estimation of time-to-event causal effects have been explored previously. Some of these procedures extend the idea of inverse probability weighting to the setting of survival analysis in constructing a combined treatment and censoring weights (Hernan 2000, Cheng 2022) to approximate exchangeability and estimating the causal estimand through a weighted estimator. Other methods approach the problem by obtaining survival outcomes for each subject through a jackknife procedure (Andersen 2010) and estimate the causal estimand based on those pseudo-observed endpoints. The pseudo-observaions approach has been further improved upon with the employment of propensity score weighting to close the distance between the collected sample and the target population (Li 2021) as well as with the recent proposal of a doubly-robust estimation technique (Wang 2023) to allow for some flexibility with regards to model misspecification. 
 
 In this study, we are interested in revisiting the weighting methods and are proposing a new procedure in which model misspecification may be implicitly adjusted for. In doing so, we will first employ the two-arm weighting method established by Cheng et.al (2022), in which weights based on the probability of treatment and the probability of censoring are calculated and used together in estimating the causal estimand of interest. We will then compare its performance to the results obtained from a single-arm sequential weighting method that we have developed, where weights are constructed iteratively, and the final compositely-weighted dataset will then be used to estimate the causal estimand.
 
@@ -589,7 +587,7 @@ table2_to_kable %>%
   janitor::clean_names() %>%
   unnest(x1_asd_raw:x3_asd_wt2) %>%
   knitr::kable(
-    col.names = linebreak(c("Scenario$^\\text{a}$",
+    col.names = linebreak(c("Scenario$^\\text{b}$",
                   "Unweighted",
                   "Dual Logistic",
                   "Logistic/Cox",
@@ -602,11 +600,11 @@ table2_to_kable %>%
                   ), align="r"),
       booktabs=TRUE,
     escape=FALSE,
-     caption = "Separate Weighting Covariate Balance Results (ASD)"
+     caption = "Separate Weighting Covariate Balance Results (ASD)$^\\text{a}$"
   )%>%
   kable_styling(latex_options = c("HOLD_position", "scale_down")) %>% 
   add_header_above(c(" " = 1, "X1" = 3, "X2"=3, "X3" = 3), escape = FALSE) %>%
-  add_footnote(c("Note: scenarios are described by (degree of overlap/treatment effect level/censoring level)"))
+  add_footnote(c("Averaged over 1000 total bootstrapped replicates (100 bootstrap replicates over each of 100 samples)", "Scenarios are described by (degree of overlap/treatment effect level/censoring level)"))
 ```
 
 ```{r, fig.height = 1, fig.width = 8}
@@ -712,7 +710,7 @@ table1_to_kable %>%
   ) %>%
   janitor::clean_names() %>%
   knitr::kable(
-    col.names = c("Scenario$^\\text{a}$",
+    col.names = c("Scenario$^\\text{b}$",
                   "True ACE",
                   "Avg. Estimate",
                   "Relative Bias",
@@ -723,11 +721,11 @@ table1_to_kable %>%
                   ),
       booktabs=TRUE,
     escape=FALSE,
-    caption = "Separate Weighting Estimation Results"
+    caption = "Separate Weighting Estimation Results$^\\text{a}$"
   )%>%
   kable_styling(latex_options = c("HOLD_position", "scale_down")) %>% 
   add_header_above(c(" " = 2, "Dual Logistic" = 3, "Logistic/Cox"=3), escape = FALSE) %>%
-  add_footnote(c("Note: scenarios are described by (degree of overlap/treatment effect level/censoring level)"))
+   add_footnote(c("Obtained over 1000 total bootstrapped replicates (100 bootstrap replicates over each of 100 samples)", "Scenarios are described by (degree of overlap/treatment effect level/censoring level)"))
 ```
 
 ```{r, fig.width = 8, fig.height = 1}
@@ -1042,7 +1040,7 @@ The results that were obtained through this simulation study were interesting an
 
 The separate weighting procedures involving logistic regressions for both propensity score models performed in ways that matched prior expectations, where scenarios with lower overlap and higher censoring rates scenarios corresponded with lower coverage rates and performance was better overall in lower censoring settings than higher censoring counterparts. However, these results may also prompt further investigation into the inner workings of the `ipcw` function from the `riskRegression` package, as results produced utilizing IPCWs generated from the Cox-Exponential model, were associated with increases in relative bias and decreases in the coverage rates. The sequential weighting procedures both produced 95% coverage rates that were much higher than expected. The covariate balance that was achieved by the IPTW$\circ$IPCW weighting procedure was quite impressive, though it was intriguing that such balance was still associated with large relative biases. 
 
-While we are inclined to recommend the sequential IPTW$\circ$IPCW for use, on the basis of improved covariate balance and most optimal 95% coverage rates, there are still a number of questions that would necessitate further investigation prior to the employment of such an estimation schematic. First, we recognize the great limitation in our study that a comparative analysis with correctly specified propensity score models was not conducted, and thus the impact of model misspecification on these causal estimates is not yet quantifiable. We hypothesize that a correctly specified propensity score model would decrease the relative biases that were observed in all scenarios, as it was known that one of the covariates included in every propensity score model was explicitly defined to have no prognostic influence on the indicator of interest. Additionally, due to computational limitations, it may be that the number of simulations that were run were still not sufficient in approximating the long-run behavior of any of these estimators -- it would be our recommendation to increase both the sample size and simulation replicate size in subsequent studies to obtain a more complete understanding of the behavior of these procedures and estimators. In the conduct of future simulation studies, we would also recommend varying and adding granularity to the scenario parameters that we used. Finally, as the focus of this study was the restricted average causal estimand, which was estimated by the non-parametric KM estimator, we would recommend investigation into the behavior, or even the application of, these weighting procedures in the setting of other causal estimands and estimators. 
+While we are inclined to recommend the sequential IPTW$\circ$IPCW for use on the basis of improved covariate balance and most optimal 95% coverage rates, there are still a number of questions that would necessitate further investigation prior to the employment of such an estimation schematic. First, we recognize the great limitation in our study that a comparative analysis with correctly specified propensity score models was not conducted, and thus the impact of model misspecification on these causal estimates is not yet quantifiable. We hypothesize that a correctly specified propensity score model would decrease the relative biases that were observed in all scenarios, as it was known that one of the covariates included in every propensity score model was explicitly defined to have no prognostic influence on the indicator of interest. Additionally, due to computational limitations, it may be that the number of simulations that were run were still not sufficient in approximating the long-run behavior of any of these estimators -- it would be our recommendation to increase both the sample size and simulation replicate size in subsequent studies to obtain a more complete understanding of the behavior of these procedures and estimators. In the conduct of future simulation studies, we would also recommend varying and adding granularity to the scenario parameters that we used. Finally, as the focus of this study was the restricted average causal estimand, which was estimated by the non-parametric KM estimator, we would recommend investigation into the behavior, or even the application of, these weighting procedures in the setting of other causal estimands and estimators. 
 
 # 6. Github Repository
 
