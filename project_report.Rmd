@@ -1,7 +1,10 @@
 ---
-title: "BIS 537 Final Project Report"
-author: "Can Meng and Waveley Qiu"
-date: "`r format(Sys.time(), '%Y-%m-%d')`"
+title: "Comparison of Weighting Methods in the Estimation of Time-to-Event Causal Effects"
+author: |
+  | Can Meng and Waveley Qiu
+  | BIS 537 Final Project
+  |
+  | Fall 2023
 geometry: margin=2cm
 output: 
   bookdown::pdf_document2:
